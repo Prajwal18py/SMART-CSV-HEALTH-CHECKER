@@ -28,3 +28,10 @@ Thumbs.db
 *.pkl
 *.pdf
 !sample_data.csv
+.streamlit/secrets.toml
+*.pyc
+__pycache__/
+.env
+venv/
+.vscode/
+*.log

@@ -1,15 +1,44 @@
 """
 Smart CSV Health Checker AI - Main Application
 Entry point for the Streamlit app
+NOW WITH SUPABASE AUTHENTICATION & DATABASE
 """
 import streamlit as st
 import warnings
 warnings.filterwarnings('ignore')
 
+# ==================== PAGE CONFIG ====================
+st.set_page_config(
+    page_title="Smart CSV Health Checker AI",
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ==================== IMPORT AUTH ====================
+from auth.login import show_login_page, show_user_info_sidebar
+from auth.auth_functions import is_authenticated
+
+# ==================== AUTHENTICATION CHECK ====================
+if not is_authenticated():
+    # Hide sidebar on login page
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        [data-testid="stSidebarCollapsedControl"] { display: none !important; }
+        </style>
+    """, unsafe_allow_html=True)
+    show_login_page()
+    st.stop()
+
+# ==================== USER IS AUTHENTICATED - SHOW APP ====================
+
 # Import UI components
 from ui.layout import setup_page_config, render_hero_section
 from ui.styles import load_custom_css
 from ui.sidebar import render_sidebar
+
+# ... rest of your imports and code stays the same
 
 # Import core functionality
 from core.data_loader import handle_file_upload, generate_test_dataset
@@ -26,11 +55,15 @@ from tabs.tab_pca import render_pca_tab
 from tabs.tab_code import render_code_tab
 from tabs.tab_deep_profile import render_deep_profile_tab
 from tabs.tab_compare import render_compare_tab
-from tabs.tab_synthetic import render_synthetic_tab  # ✅ FIXED: Changed from tab_synthetic_data
+from tabs.tab_synthetic import render_synthetic_tab
+from tabs.tab_dashboard import render_dashboard_tab  # ✅ NEW: Dashboard tab
 
 # Import export utilities
 from export.pdf_generator import generate_pdf
 from visualization.charts import render_overview_metrics, render_dataset_overview_cards
+
+# Import database functions (NEW)
+from database.db_functions import save_analysis
 
 import time
 
@@ -43,19 +76,22 @@ def main():
     # 2. Load custom CSS
     load_custom_css()
     
-    # 3. Render sidebar and get settings
+    # 3. Show user info in sidebar (NEW)
+    show_user_info_sidebar()
+    
+    # 4. Render sidebar and get settings
     settings = render_sidebar()
     
-    # 4. Render hero section
+    # 5. Render hero section
     render_hero_section()
     
-    # 5. File upload
+    # 6. File upload
     uploaded_file = st.file_uploader(
         "📂 Drop your CSV file here or click to browse",
         type=['csv']
     )
     
-    # 6. Handle file upload or show landing page
+    # 7. Handle file upload or show landing page
     if uploaded_file:
         # Load and validate data
         df = handle_file_upload(uploaded_file)
@@ -93,13 +129,35 @@ def main():
             f"Health Grade: **{get_health_grade(results['health_score'])}**"
         )
         
+        # ==================== AUTO-SAVE TO DATABASE (NEW) ====================
+        # Save analysis to database automatically
+        if 'last_saved_file' not in st.session_state or st.session_state.last_saved_file != uploaded_file.name:
+            health_score = results.get('health_score', 0)
+            issues_summary = results.get('issues_summary', {})
+            
+            save_result = save_analysis(
+                filename=uploaded_file.name,
+                health_score=health_score,
+                total_rows=len(df),
+                total_columns=len(df.columns),
+                issues_high=issues_summary.get('High', 0),
+                issues_medium=issues_summary.get('Medium', 0),
+                issues_low=issues_summary.get('Low', 0),
+                analysis_data={"column_types": col_types}
+            )
+            
+            if save_result['success']:
+                st.session_state.last_saved_file = uploaded_file.name
+                st.toast("✅ Analysis saved to your history!", icon="💾")
+        
         # Display metrics
         st.markdown("---")
         render_overview_metrics(df, results, col_types)
         st.write("##")
         
-        # Render tabs with new Synthetic Data tab
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+        # ==================== RENDER TABS (UPDATED WITH DASHBOARD) ====================
+        tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+            "📊 Dashboard",      # ✅ NEW TAB
             "📋 Overview",
             "🧠 AI Deep Dive",
             "🛠️ Fix Data",
@@ -111,6 +169,9 @@ def main():
             "📈 Compare",
             "🎲 Synthetic Data"
         ])
+        
+        with tab0:  # ✅ NEW: Dashboard tab
+            render_dashboard_tab()
         
         with tab1:
             render_overview_tab(df, results, col_types)
@@ -140,7 +201,7 @@ def main():
             render_compare_tab(df)
         
         with tab10:
-            render_synthetic_tab(df, col_types)  # ✅ FIXED: Changed from render_synthetic_data_tab
+            render_synthetic_tab(df, col_types)
         
         # Export buttons
         st.markdown("---")
@@ -253,6 +314,8 @@ def render_landing_page():
         - Exportable Python code
         - PDF reports
         - Compare multiple datasets
+        - 📊 Analysis history dashboard (NEW)
+        - 💾 Auto-save to database (NEW)
         """)
 
 

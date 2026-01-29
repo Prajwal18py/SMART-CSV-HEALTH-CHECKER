@@ -19,3 +19,7 @@ fpdf>=1.7.2
 # Additional utilities
 openpyxl>=3.1.0  # For Excel support if needed
 python-dateutil>=2.8.0
+
+pyarrow>=12.0.0
+supabase>=2.3.0
+postgrest>=0.13.0
