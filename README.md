@@ -175,30 +175,43 @@ key = "your-supabase-anon-key"
 <div align="center">
 
 ### 🔐 Login Page
-<img src="https://github.com/user-attachments/assets/06a9f3b4-f07d-4ac1-8623-653881944a79" alt="Login Page" width="850">
+<img src="https://github.com/user-attachments/assets/52cfb194-91e9-46e4-99a8-abfee42d58d9" alt="Login Page" width="850">
 
 ---
 
 ### 📊 Dashboard Overview
-<img src="https://github.com/user-attachments/assets/9e023e03-ee23-4d2b-828e-1791f5112899" alt="Dashboard Overview" width="850">
+<img src="https://github.com/user-attachments/assets/dc4b5136-b8fe-467e-a571-da3161b5c201" alt="Dashboard Overview" width="850">
 
 ---
 
 ### 🧠 AI Deep Dive Analysis
-<img src="https://github.com/user-attachments/assets/33e403a5-33cc-4951-ba00-87f3b663f50f" alt="AI Analysis" width="850">
+<img src="https://github.com/user-attachments/assets/d9579306-b8c2-4c07-8a33-14ff2da41c0b" alt="AI Analysis" width="850">
 
 ---
 
 ### 📈 Interactive Visualizations
 
-<img src="https://github.com/user-attachments/assets/da3ea347-5edd-4c5d-9401-56d3aa70e317" alt="Visualization 1" width="850">
+<img src="https://github.com/user-attachments/assets/c9ae51de-6801-450e-95c0-8278028b1fad" alt="Visualization 1" width="850">
 
-<img src="https://github.com/user-attachments/assets/a6d68850-b40e-437e-bbc7-bf601719545b" alt="Visualization 2" width="850">
+<img src="https://github.com/user-attachments/assets/8dee816d-4517-908b-e0c52c9b2bf2" alt="Visualization 2" width="850">
 
-<img src="https://github.com/user-attachments/assets/a9d9756e-83fc-4a2d-920b-38497eecefd9" alt="Visualization 3" width="850">
+<img src="https://github.com/user-attachments/assets/235e5679-3b80-435a-9f06-3d1f76fd6722" alt="Visualization 3" width="850">
+
+---
+
+### ✨ **And Many More Features!**
+
+*These are just a few highlights. Explore the full app to discover:*
+- 🔧 Custom Data Pipelines
+- 📉 PCA Analysis
+- 💻 Code Export
+- 🔒 Deep Profiling with PII Detection
+- 📈 Dataset Comparison
+- 🎲 Synthetic Data Generation
+
+**[🚀 Try the Live App](https://smart-csv-health-checker.streamlit.app/)**
 
 </div>
-
 ## 🏗️ **Project Structure**
 
 ```
