@@ -408,6 +408,84 @@ def load_custom_css():
             0 4px 15px rgba(168, 85, 247, 0.5),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
+
+        /* ============================================================ */
+    /* INPUT FIELDS - FIXED FOR LIGHT/DARK MODE */
+    /* ============================================================ */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stTextArea > div > div > textarea {
+        background: #1a1a2e !important;
+        background-color: #1a1a2e !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 14px !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        padding: 12px 16px !important;
+        font-size: 15px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        background: #1f1f3a !important;
+        background-color: #1f1f3a !important;
+        border: 1.5px solid rgba(168, 85, 247, 0.5) !important;
+        box-shadow: 
+            0 0 0 4px rgba(168, 85, 247, 0.1),
+            0 0 20px rgba(168, 85, 247, 0.2) !important;
+        outline: none !important;
+    }
+
+    .stTextInput > div > div > input::placeholder,
+    .stTextArea > div > div > textarea::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+        opacity: 1 !important;
+    }
+
+    /* Force dark background on all input types */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    textarea {
+        background: #1a1a2e !important;
+        background-color: #1a1a2e !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+
+    /* Fix Chrome autofill white background */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #1a1a2e inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+        background-color: #1a1a2e !important;
+        transition: background-color 5000s ease-in-out 0s !important;
+    }
+
+    /* Select boxes */
+    .stSelectbox > div > div {
+        background: #1a1a2e !important;
+        background-color: #1a1a2e !important;
+        color: #ffffff !important;
+    }
+
+    /* Labels */
+    .stTextInput > label,
+    .stNumberInput > label,
+    .stTextArea > label,
+    .stSelectbox > label {
+        color: rgba(203, 213, 224, 0.95) !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }                   
     
     /* ============================================================ */
     /* FILE UPLOADER - MATCHES LOGIN GLASSMORPHISM */

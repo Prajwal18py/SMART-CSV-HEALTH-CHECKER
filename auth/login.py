@@ -285,37 +285,82 @@ def get_login_css():
         line-height: 1.6;
     }
     
+        /* ═══════════════════════════════════════════════════════════════════════ */
+    /* INPUT FIELD STYLES - FIXED FOR ALL BROWSER THEMES */
     /* ═══════════════════════════════════════════════════════════════════════ */
-    /* INPUT FIELD STYLES */
-    /* ═══════════════════════════════════════════════════════════════════════ */
-    .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+
+    /* Target ALL Streamlit input containers */
+    .stTextInput > div > div,
+    .stTextInput > div > div > input,
+    [data-testid="stTextInput"] > div > div,
+    [data-testid="stTextInput"] input,
+    [data-baseweb="input"] > div,
+    [data-baseweb="input"] input,
+    [data-baseweb="base-input"] {
+        background: #1a1a2e !important;
+        background-color: #1a1a2e !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        caret-color: #ffffff !important;
+    }
+
+    /* Main input styling */
+    .stTextInput > div > div > input,
+    [data-testid="stTextInput"] input,
+    [data-baseweb="input"] input {
+        background: #1a1a2e !important;
+        background-color: #1a1a2e !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 14px !important;
         color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
         padding: 16px 20px !important;
         font-size: 15px !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         font-family: 'Inter', sans-serif !important;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
     }
-    
-    .stTextInput > div > div > input:focus {
-        background: rgba(255, 255, 255, 0.06) !important;
+
+    /* Input container background */
+    [data-baseweb="input"] {
+        background-color: #1a1a2e !important;
+        border-radius: 14px !important;
+    }
+
+    [data-baseweb="base-input"] {
+        background-color: #1a1a2e !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* Focus state */
+    .stTextInput > div > div > input:focus,
+    [data-testid="stTextInput"] input:focus,
+    [data-baseweb="input"]:focus-within {
+        background: #1f1f3a !important;
+        background-color: #1f1f3a !important;
         border: 1.5px solid rgba(168, 85, 247, 0.5) !important;
         box-shadow: 
-            0 0 0 4px rgba(168, 85, 247, 0.1),
+            0 0 0 4px rgba(168, 85, 247, 0.15),
             inset 0 2px 4px rgba(0, 0, 0, 0.2),
             0 0 20px rgba(168, 85, 247, 0.2) !important;
         outline: none !important;
-        transform: translateY(-1px);
     }
-    
-    .stTextInput > div > div > input::placeholder {
-        color: rgba(255, 255, 255, 0.25) !important;
+
+    /* Placeholder text */
+    .stTextInput > div > div > input::placeholder,
+    [data-testid="stTextInput"] input::placeholder,
+    [data-baseweb="input"] input::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.4) !important;
+        opacity: 1 !important;
     }
-    
-    .stTextInput > label {
+
+    /* Labels */
+    .stTextInput > label,
+    [data-testid="stTextInput"] label {
         color: rgba(203, 213, 224, 0.95) !important;
         font-weight: 600 !important;
         font-size: 14px !important;
@@ -324,6 +369,103 @@ def get_login_css():
         display: flex !important;
         align-items: center !important;
         gap: 6px !important;
+    }
+
+    /* Password field eye icon container */
+    [data-testid="stTextInput"] > div > div,
+    .stTextInput > div > div {
+        background: #1a1a2e !important;
+        background-color: #1a1a2e !important;
+        border-radius: 14px !important;
+    }
+
+    /* Password toggle button (eye icon) */
+    button[kind="icon"],
+    [data-testid="stTextInput"] button,
+    .stTextInput button {
+        background: transparent !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    /* Force ALL input elements */
+    input, textarea {
+        background: #1a1a2e !important;
+        background-color: #1a1a2e !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* Chrome/Safari autofill fix */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 50px #1a1a2e inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+        background-color: #1a1a2e !important;
+        color: #ffffff !important;
+        transition: background-color 5000s ease-in-out 0s !important;
+        caret-color: #ffffff !important;
+    }
+
+    /* Firefox autofill */
+    input:autofill {
+        background: #1a1a2e !important;
+        color: #ffffff !important;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* BUTTON STYLES - FIXED FOR ALL BROWSER THEMES */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    .stButton > button,
+    [data-testid="stFormSubmitButton"] > button,
+    button[kind="primary"],
+    button[kind="secondary"] {
+        width: 100%;
+        background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #8b5cf6 100%) !important;
+        background-size: 200% 200%;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+        border: none !important;
+        border-radius: 14px !important;
+        padding: 18px 28px !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 
+            0 4px 20px rgba(168, 85, 247, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        text-transform: uppercase;
+        font-family: 'Space Grotesk', sans-serif;
+        position: relative;
+        overflow: hidden;
+        animation: buttonGradient 3s ease infinite;
+    }
+
+    .stButton > button:hover,
+    [data-testid="stFormSubmitButton"] > button:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 8px 30px rgba(168, 85, 247, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* Form submit button specific */
+    [data-testid="stFormSubmitButton"] button {
+        background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #8b5cf6 100%) !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }
+
+    /* Help text / hint text */
+    .stTextInput small,
+    [data-testid="stTextInput"] small,
+    div[data-testid="InputInstructions"] {
+        color: rgba(160, 174, 192, 0.7) !important;
+        background: transparent !important;
     }
     
     /* ═══════════════════════════════════════════════════════════════════════ */
