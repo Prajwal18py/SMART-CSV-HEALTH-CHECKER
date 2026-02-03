@@ -19,25 +19,45 @@ def render_fix_data_tab(df, results, col_types):
     with st.expander("🤖 AI Auto-Repair (Experimental)", expanded=False):
         st.caption("Uses Random Forest to predict and fill missing values based on patterns in other columns.")
         
-        if st.button("🚀 Run AI Repair"):
-            with st.spinner("🧠 AI analyzing patterns..."):
-                progress = st.progress(0)
-                df_repaired = df.copy()
-                repaired_cols = []
-                cols_with_missing = [c for c in df.columns if df[c].isna().sum() > 0]
-                
-                for idx, col in enumerate(cols_with_missing):
-                    df_repaired = ai_smart_imputation(df_repaired, col)
-                    repaired_cols.append(col)
-                    progress.progress((idx + 1) / len(cols_with_missing))
-                
-                progress.empty()
+        if st.button("🚀 Run AI Repair", key="ai_repair_btn"):
+            cols_with_missing = [c for c in df.columns if df[c].isna().sum() > 0]
+            
+            if not cols_with_missing:
+                st.info("✅ No missing values found! Data is already complete.")
+            else:
+                with st.status("🧠 AI analyzing patterns...", expanded=True) as status:
+                    progress = st.progress(0)
+                    df_repaired = df.copy()
+                    repaired_cols = []
+                    
+                    for idx, col in enumerate(cols_with_missing):
+                        st.write(f"Processing: **{col}**")
+                        try:
+                            df_repaired = ai_smart_imputation(df_repaired, col)
+                            repaired_cols.append(col)
+                        except Exception as e:
+                            st.warning(f"⚠️ Could not repair '{col}': {str(e)}")
+                        progress.progress((idx + 1) / len(cols_with_missing))
+                    
+                    progress.empty()
+                    status.update(label="✅ AI Analysis Complete!", state="complete", expanded=False)
                 
                 if repaired_cols:
                     st.success(f"✨ Repaired {len(repaired_cols)} columns: {', '.join(repaired_cols)}")
+                    st.markdown("**Preview of Repaired Data:**")
                     st.dataframe(df_repaired.head(20))
+                    st.session_state['ai_repaired_df'] = df_repaired
+                    
+                    st.download_button(
+                        "⬇️ Download AI-Repaired CSV",
+                        df_repaired.to_csv(index=False).encode('utf-8'),
+                        "ai_repaired_data.csv",
+                        "text/csv",
+                        use_container_width=True,
+                        key="download_ai_repaired"
+                    )
                 else:
-                    st.info("✅ Data is already complete!")
+                    st.warning("⚠️ Could not repair any columns. Try manual cleaning options below.")
     
     # =================================================================
     # SMART CLEANING WIZARD
@@ -46,24 +66,20 @@ def render_fix_data_tab(df, results, col_types):
     st.markdown('<h2 class="gradient-header">🔮 Smart Cleaning Wizard</h2>', unsafe_allow_html=True)
     st.caption("Let the wizard guide you through cleaning step-by-step")
     
-    # Initialize session state
     if 'wizard_step' not in st.session_state:
         st.session_state.wizard_step = 0
     if 'wizard_actions' not in st.session_state:
         st.session_state.wizard_actions = {}
     
-    # Step 0: Start button
     if st.session_state.wizard_step == 0:
         if st.button("🪄 Start Cleaning Wizard", type="primary", use_container_width=True):
             st.session_state.wizard_step = 1
             st.rerun()
     
-    # Steps 1-4: Wizard flow
     elif st.session_state.wizard_step > 0:
         steps = ["Missing Data", "Duplicates", "Outliers", "Summary"]
         current_step = st.session_state.wizard_step
         
-        # Progress indicator
         cols_prog = st.columns(len(steps))
         for idx, step in enumerate(steps):
             with cols_prog[idx]:
@@ -133,7 +149,6 @@ def render_fix_data_tab(df, results, col_types):
         elif current_step == 4:
             st.markdown("### ✅ Ready to Apply")
             
-            # Show summary
             st.markdown("**Actions to be performed:**")
             for key, val in st.session_state.wizard_actions.items():
                 if val not in ["Skip", False]:
@@ -142,23 +157,20 @@ def render_fix_data_tab(df, results, col_types):
             if st.button("✨ Apply All Changes", type="primary"):
                 df_clean = df.copy()
                 
-                # Step 1: Handle missing values
                 for col, act in st.session_state.wizard_actions.items():
                     if col in df_clean.columns:
                         if act == "Fill Mean" and pd.api.types.is_numeric_dtype(df_clean[col]):
-                            df_clean[col].fillna(df_clean[col].mean(), inplace=True)
+                            df_clean[col] = df_clean[col].fillna(df_clean[col].mean())
                         elif act == "Fill Mode":
                             mode_vals = df_clean[col].mode()
                             if not mode_vals.empty:
-                                df_clean[col].fillna(mode_vals[0], inplace=True)
+                                df_clean[col] = df_clean[col].fillna(mode_vals[0])
                         elif act == "Drop Column":
-                            df_clean.drop(columns=[col], inplace=True)
+                            df_clean = df_clean.drop(columns=[col])
                 
-                # Step 2: Remove duplicates
                 if st.session_state.wizard_actions.get('dedup'):
-                    df_clean.drop_duplicates(inplace=True)
+                    df_clean = df_clean.drop_duplicates()
                 
-                # Step 3: Handle outliers
                 if st.session_state.wizard_actions.get('outliers') == "Remove Rows":
                     for col in df_clean.select_dtypes(include=[np.number]).columns:
                         Q1, Q3 = df_clean[col].quantile(0.25), df_clean[col].quantile(0.75)
@@ -183,7 +195,6 @@ def render_fix_data_tab(df, results, col_types):
                     use_container_width=True
                 )
             
-            # Reset wizard
             if st.button("🔄 Start New Wizard"):
                 st.session_state.wizard_step = 0
                 st.session_state.wizard_actions = {}
@@ -222,14 +233,13 @@ def render_fix_data_tab(df, results, col_types):
             col_types['categorical']
         )
     
-    # Apply auto-cleaning preview
     df_clean_preview = df.copy()
     
     if cleaning_ops.get('drop_duplicates'):
-        df_clean_preview.drop_duplicates(inplace=True)
+        df_clean_preview = df_clean_preview.drop_duplicates()
     
     if cleaning_ops.get('drop_cols'):
-        df_clean_preview.drop(columns=cleaning_ops['drop_cols'], inplace=True)
+        df_clean_preview = df_clean_preview.drop(columns=cleaning_ops['drop_cols'])
     
     for c in cleaning_ops.get('impute_mean', []):
         df_clean_preview[c] = df_clean_preview[c].fillna(df_clean_preview[c].mean())
@@ -256,7 +266,6 @@ def render_fix_data_tab(df, results, col_types):
     
     st.write("")
     
-    # Save buttons
     col_reset, col_save = st.columns([1, 3])
     
     with col_reset:
