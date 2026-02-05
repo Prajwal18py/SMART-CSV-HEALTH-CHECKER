@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
-    page_title="Smart CSV Health Checker AI",
+    page_title="Smart CSV AI Studio",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
