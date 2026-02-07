@@ -1,6 +1,7 @@
 """
 PII (Personally Identifiable Information) Detection
 Detect and flag sensitive data columns
+UPDATED: Fixed credit card pattern to handle dashes and spaces
 """
 import pandas as pd
 import numpy as np
@@ -30,7 +31,9 @@ PII_PATTERNS = {
         'recommendation': 'Remove SSN immediately - highly sensitive'
     },
     'credit_card': {
-        'pattern': r'^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})$',
+        # Updated pattern: accepts dashes, spaces, or no separators
+        # Matches: 1234-5678-9012-3456, 1234 5678 9012 3456, 1234567890123456
+        'pattern': r'^[0-9]{4}[\s-]?[0-9]{4}[\s-]?[0-9]{4}[\s-]?[0-9]{4}$',
         'description': 'Credit Card Number',
         'risk': 'Critical',
         'recommendation': 'Remove credit card numbers immediately'

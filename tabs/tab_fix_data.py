@@ -5,19 +5,139 @@ Auto-cleaning, AI repair, wizard, and interactive editor
 import streamlit as st
 import pandas as pd
 import numpy as np
+import time
 from features.imputation import ai_smart_imputation
 
-
-def render_fix_data_tab(df, results, col_types):
-    """Render the complete Fix Data tab with all features"""
+def render_fix_data_tab(df, results, col_types, sidebar_settings):
+    """
+    Render the complete Fix Data tab with all features.
+    """
     
     st.subheader("🛠️ Auto-Clean Your Data")
     
+    # Extract settings from sidebar
+    imputation_method = sidebar_settings.get('imputation_method', 'mean')
+    
+    # Initialize session state for global cleaned data if not exists
+    if 'global_cleaned_df' not in st.session_state:
+        st.session_state.global_cleaned_df = None
+
     # =================================================================
-    # AI AUTO-REPAIR
+    # ⚡ GLOBAL STRATEGY DASHBOARD (Redesigned)
     # =================================================================
-    with st.expander("🤖 AI Auto-Repair (Experimental)", expanded=False):
-        st.caption("Uses Random Forest to predict and fill missing values based on patterns in other columns.")
+    with st.container():
+        # 1. Status Banner
+        st.info(f"⚙️ **Active Strategy:** You selected **'{imputation_method.upper()}'** in the Sidebar.", icon="ℹ️")
+        
+        # 2. Action Row (Text + Button)
+        c_text, c_btn = st.columns([0.7, 0.3], gap="medium")
+        
+        with c_text:
+            st.markdown(f"### Apply **{imputation_method.upper()}**?")
+            st.caption(f"This will immediately process all missing values using the {imputation_method} method.")
+        
+        with c_btn:
+            st.write("") # Spacer to align button vertically
+            apply_btn = st.button(
+                f"⚡ Apply {imputation_method.upper()} Now", 
+                type="primary", 
+                width="stretch"
+            )
+
+        # 3. Processing Logic (Uses st.status instead of spinner)
+        if apply_btn:
+            cols_missing = [c for c in df.columns if df[c].isna().sum() > 0]
+            
+            if not cols_missing:
+                st.balloons()
+                st.success("✅ Data is already complete! No imputation needed.")
+            else:
+                # MODERN LOADING UI
+                with st.status(f"🚀 Running {imputation_method.upper()} Imputation...", expanded=True) as status:
+                    df_global = df.copy()
+                    
+                    # Track operations for code generation
+                    cleaning_operations = {
+                        'method': imputation_method,
+                        'impute_mean': [],
+                        'impute_mode': [],
+                        'impute_mice': [],
+                        'drop_rows': False
+                    }
+                    
+                    st.write("🔍 Analyzing missing patterns...")
+                    time.sleep(0.5) # UX pause to let user see the step
+                    
+                    if imputation_method == 'mice':
+                        st.write("🧠 Training AI models for imputation...")
+                        for col in cols_missing:
+                            df_global = ai_smart_imputation(df_global, col)
+                            cleaning_operations['impute_mice'].append(col)
+                        
+                    elif imputation_method == 'drop':
+                        st.write("🗑️ Removing incomplete rows...")
+                        df_global = df_global.dropna()
+                        cleaning_operations['drop_rows'] = True
+                        
+                    else: # Mean/Mode
+                        st.write("📊 Calculating statistical averages...")
+                        for col in cols_missing:
+                            if pd.api.types.is_numeric_dtype(df_global[col]):
+                                df_global[col] = df_global[col].fillna(df_global[col].mean())
+                                cleaning_operations['impute_mean'].append(col)
+                            else:
+                                if not df_global[col].mode().empty:
+                                    df_global[col] = df_global[col].fillna(df_global[col].mode()[0])
+                                    cleaning_operations['impute_mode'].append(col)
+                    
+                    st.write("✨ Finalizing dataset...")
+                    time.sleep(0.3)
+                    status.update(label="✅ Imputation Complete!", state="complete", expanded=False)
+                    
+                    # Save to session state so it persists
+                    st.session_state.global_cleaned_df = df_global
+                    # ✅ SAVE OPERATIONS FOR CODE GENERATION
+                    st.session_state['cleaning_ops'] = cleaning_operations
+
+        # 4. Results Display (FULL WIDTH - OUTSIDE COLUMNS)
+        if st.session_state.global_cleaned_df is not None:
+            st.markdown("---")
+            
+            # Success Metrics
+            res_df = st.session_state.global_cleaned_df
+            rows_kept = len(res_df)
+            rows_orig = len(df)
+            
+            col_res1, col_res2 = st.columns([3, 1])
+            
+            with col_res1:
+                st.success(f"✅ **Success!** Data processed using {imputation_method.upper()}.")
+                st.markdown(f"**Rows:** {rows_kept} (Original: {rows_orig})")
+            
+            with col_res2:
+                 st.download_button(
+                    label="⬇️ Download CSV",
+                    data=res_df.to_csv(index=False).encode('utf-8'),
+                    file_name=f"cleaned_data_{imputation_method}.csv",
+                    mime="text/csv",
+                    width="stretch"
+                )
+
+            # Data Preview (Centered and Full Width)
+            with st.expander("👀 View Cleaned Data Result", expanded=True):
+                st.dataframe(res_df.head(50))  # ✅ FIXED: Removed use_container_width
+
+    st.markdown("---")
+
+
+    # =================================================================
+    # AI AUTO-REPAIR (MICE/Advanced)
+    # =================================================================
+    # We expand this automatically if MICE is selected in sidebar
+    start_expanded = (imputation_method == 'mice')
+    
+    with st.expander("🤖 AI Auto-Repair (Advanced)", expanded=start_expanded):
+        st.caption("Uses Random Forest to predict and fill missing values (Best for MICE preference).")
         
         if st.button("🚀 Run AI Repair", key="ai_repair_btn"):
             cols_with_missing = [c for c in df.columns if df[c].isna().sum() > 0]
@@ -44,21 +164,26 @@ def render_fix_data_tab(df, results, col_types):
                 
                 if repaired_cols:
                     st.success(f"✨ Repaired {len(repaired_cols)} columns: {', '.join(repaired_cols)}")
-                    st.markdown("**Preview of Repaired Data:**")
                     st.dataframe(df_repaired.head(20))
-                    st.session_state['ai_repaired_df'] = df_repaired
+                    
+                    # ✅ SAVE OPERATIONS FOR CODE GENERATION
+                    st.session_state['cleaning_ops'] = {
+                        'method': 'mice',
+                        'impute_mice': repaired_cols,
+                        'impute_mean': [],
+                        'impute_mode': [],
+                        'drop_rows': False
+                    }
                     
                     st.download_button(
                         "⬇️ Download AI-Repaired CSV",
                         df_repaired.to_csv(index=False).encode('utf-8'),
                         "ai_repaired_data.csv",
                         "text/csv",
-                        use_container_width=True,
+                        width="stretch",
                         key="download_ai_repaired"
                     )
-                else:
-                    st.warning("⚠️ Could not repair any columns. Try manual cleaning options below.")
-    
+
     # =================================================================
     # SMART CLEANING WIZARD
     # =================================================================
@@ -72,7 +197,7 @@ def render_fix_data_tab(df, results, col_types):
         st.session_state.wizard_actions = {}
     
     if st.session_state.wizard_step == 0:
-        if st.button("🪄 Start Cleaning Wizard", type="primary", use_container_width=True):
+        if st.button("🪄 Start Cleaning Wizard", type="primary", width="stretch"):
             st.session_state.wizard_step = 1
             st.rerun()
     
@@ -98,11 +223,24 @@ def render_fix_data_tab(df, results, col_types):
             st.markdown("### Step 1: Handle Missing Values")
             missing_cols = df.columns[df.isna().any()].tolist()
             
+            # Determine default action based on Sidebar Setting
+            default_index = 0  # Skip
+            if imputation_method == 'mean':
+                default_index = 1 # Fill Mean
+            elif imputation_method == 'drop':
+                default_index = 3 # Drop Column
+            
             if missing_cols:
                 for col in missing_cols[:5]:
+                    # Adjust default index based on column type + sidebar setting
+                    final_index = default_index
+                    if imputation_method == 'mean' and not pd.api.types.is_numeric_dtype(df[col]):
+                        final_index = 2 # Fill Mode for categorical if 'mean' was selected
+                        
                     act = st.selectbox(
                         f"Action for {col}",
                         ["Skip", "Fill Mean", "Fill Mode", "Drop Column"],
+                        index=final_index, # <--- DYNAMICALLY SET DEFAULT
                         key=f"wiz_{col}"
                     )
                     st.session_state.wizard_actions[col] = act
@@ -132,6 +270,9 @@ def render_fix_data_tab(df, results, col_types):
         elif current_step == 3:
             st.markdown("### Step 3: Handle Outliers")
             
+            # Use sensitivity from sidebar for thresholding if needed, 
+            # though here we rely on the pre-calculated results
+            
             if not results['stats']['outlier_info'].empty:
                 st.dataframe(results['stats']['outlier_info'])
                 st.session_state.wizard_actions['outliers'] = st.radio(
@@ -157,19 +298,33 @@ def render_fix_data_tab(df, results, col_types):
             if st.button("✨ Apply All Changes", type="primary"):
                 df_clean = df.copy()
                 
+                # Track wizard operations for code generation
+                wizard_ops = {
+                    'method': 'wizard',
+                    'impute_mean': [],
+                    'impute_mode': [],
+                    'drop_cols': [],
+                    'drop_duplicates': False,
+                    'remove_outliers': False
+                }
+                
                 for col, act in st.session_state.wizard_actions.items():
                     if col in df_clean.columns:
                         if act == "Fill Mean" and pd.api.types.is_numeric_dtype(df_clean[col]):
                             df_clean[col] = df_clean[col].fillna(df_clean[col].mean())
+                            wizard_ops['impute_mean'].append(col)
                         elif act == "Fill Mode":
                             mode_vals = df_clean[col].mode()
                             if not mode_vals.empty:
                                 df_clean[col] = df_clean[col].fillna(mode_vals[0])
+                                wizard_ops['impute_mode'].append(col)
                         elif act == "Drop Column":
                             df_clean = df_clean.drop(columns=[col])
+                            wizard_ops['drop_cols'].append(col)
                 
                 if st.session_state.wizard_actions.get('dedup'):
                     df_clean = df_clean.drop_duplicates()
+                    wizard_ops['drop_duplicates'] = True
                 
                 if st.session_state.wizard_actions.get('outliers') == "Remove Rows":
                     for col in df_clean.select_dtypes(include=[np.number]).columns:
@@ -179,6 +334,10 @@ def render_fix_data_tab(df, results, col_types):
                             ~((df_clean[col] < (Q1 - 1.5 * IQR)) |
                               (df_clean[col] > (Q3 + 1.5 * IQR)))
                         ]
+                    wizard_ops['remove_outliers'] = True
+                
+                # ✅ SAVE OPERATIONS FOR CODE GENERATION
+                st.session_state['cleaning_ops'] = wizard_ops
                 
                 st.toast("Changes applied successfully!", icon="✨")
                 st.success(
@@ -192,18 +351,21 @@ def render_fix_data_tab(df, results, col_types):
                     df_clean.to_csv(index=False).encode('utf-8'),
                     "wizard_cleaned.csv",
                     "text/csv",
-                    use_container_width=True
+                    width="stretch"
                 )
             
             if st.button("🔄 Start New Wizard"):
                 st.session_state.wizard_step = 0
                 st.session_state.wizard_actions = {}
                 st.rerun()
-    
+
     # =================================================================
     # MANUAL CLEANING OPTIONS
     # =================================================================
     st.markdown("---")
+    
+    # Pre-select manual options based on sidebar settings? 
+    # Usually better to leave manual as manual, but we can default the checkboxes.
     
     cleaning_ops = {}
     c1, c2 = st.columns(2)
@@ -224,17 +386,28 @@ def render_fix_data_tab(df, results, col_types):
             )
     
     with c2:
+        # Default numeric/categorical selections based on Sidebar Strategy
+        default_mean = []
+        default_mode = []
+        
+        if imputation_method == 'mean':
+            default_mean = col_types['numeric']
+            default_mode = col_types['categorical']
+
         cleaning_ops['impute_mean'] = st.multiselect(
             "🔢 Fill Numeric (Mean)",
-            col_types['numeric']
+            col_types['numeric'],
+            default=default_mean  # <--- Linked to Sidebar
         )
         cleaning_ops['impute_mode'] = st.multiselect(
             "📝 Fill Categorical (Mode)",
-            col_types['categorical']
+            col_types['categorical'],
+            default=default_mode  # <--- Linked to Sidebar
         )
     
     df_clean_preview = df.copy()
     
+    # Apply preview logic
     if cleaning_ops.get('drop_duplicates'):
         df_clean_preview = df_clean_preview.drop_duplicates()
     
@@ -269,11 +442,13 @@ def render_fix_data_tab(df, results, col_types):
     col_reset, col_save = st.columns([1, 3])
     
     with col_reset:
-        if st.button("🔄 Reset to Original", help="Undo all manual edits", use_container_width=True):
+        if st.button("🔄 Reset to Original", help="Undo all manual edits", width="stretch"):
             st.rerun()
     
     with col_save:
-        if st.button("✨ Save Changes & Download Cleaned Data", type="primary", use_container_width=True):
+        if st.button("✨ Save Changes & Download Cleaned Data", type="primary", width="stretch"):
+            # ✅ SAVE OPERATIONS FOR CODE GENERATION
+            cleaning_ops['method'] = 'manual'
             st.session_state['cleaning_ops'] = cleaning_ops
             
             ops_count = (
@@ -292,5 +467,5 @@ def render_fix_data_tab(df, results, col_types):
                 edited_df.to_csv(index=False).encode('utf-8'),
                 "cleaned_data.csv",
                 "text/csv",
-                use_container_width=True
+                width="stretch"
             )

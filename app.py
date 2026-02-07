@@ -38,8 +38,6 @@ from ui.layout import setup_page_config, render_hero_section
 from ui.styles import load_custom_css
 from ui.sidebar import render_sidebar
 
-# ... rest of your imports and code stays the same
-
 # Import core functionality
 from core.data_loader import handle_file_upload, generate_test_dataset
 from core.type_detection import detect_column_types
@@ -49,6 +47,7 @@ from core.analysis import analyze_csv_with_ai
 from tabs.tab_overview import render_overview_tab
 from tabs.tab_ai_deep_dive import render_ai_deep_dive_tab
 from tabs.tab_fix_data import render_fix_data_tab
+from tabs.tab_skewness import render_skewness_tab  # ✅ NEW: Skewness Analysis
 from tabs.tab_pipeline import render_pipeline_tab
 from tabs.tab_visualizations import render_visualizations_tab
 from tabs.tab_pca import render_pca_tab
@@ -56,13 +55,13 @@ from tabs.tab_code import render_code_tab
 from tabs.tab_deep_profile import render_deep_profile_tab
 from tabs.tab_compare import render_compare_tab
 from tabs.tab_synthetic import render_synthetic_tab
-from tabs.tab_dashboard import render_dashboard_tab  # ✅ NEW: Dashboard tab
+from tabs.tab_dashboard import render_dashboard_tab
 
 # Import export utilities
 from export.pdf_generator import generate_pdf
 from visualization.charts import render_overview_metrics, render_dataset_overview_cards
 
-# Import database functions (NEW)
+# Import database functions
 from database.db_functions import save_analysis
 
 import time
@@ -76,7 +75,7 @@ def main():
     # 2. Load custom CSS
     load_custom_css()
     
-    # 3. Show user info in sidebar (NEW)
+    # 3. Show user info in sidebar
     show_user_info_sidebar()
     
     # 4. Render sidebar and get settings
@@ -129,7 +128,7 @@ def main():
             f"Health Grade: **{get_health_grade(results['health_score'])}**"
         )
         
-        # ==================== AUTO-SAVE TO DATABASE (NEW) ====================
+        # ==================== AUTO-SAVE TO DATABASE ====================
         # Save analysis to database automatically
         if 'last_saved_file' not in st.session_state or st.session_state.last_saved_file != uploaded_file.name:
             health_score = results.get('health_score', 0)
@@ -155,12 +154,13 @@ def main():
         render_overview_metrics(df, results, col_types)
         st.write("##")
         
-        # ==================== RENDER TABS (UPDATED WITH DASHBOARD) ====================
-        tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
-            "📊 Dashboard",      # ✅ NEW TAB
+        # ==================== RENDER TABS (UPDATED WITH SKEWNESS) ====================
+        tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
+            "📊 Dashboard",
             "📋 Overview",
             "🧠 AI Deep Dive",
             "🛠️ Fix Data",
+            "📐 Skewness",        # ✅ NEW: Positioned after Fix Data
             "🔧 Pipeline",
             "📊 Visualizations",
             "📉 PCA",
@@ -170,7 +170,7 @@ def main():
             "🎲 Synthetic Data"
         ])
         
-        with tab0:  # ✅ NEW: Dashboard tab
+        with tab0:
             render_dashboard_tab()
         
         with tab1:
@@ -180,27 +180,36 @@ def main():
             render_ai_deep_dive_tab(df, results, col_types, settings)
         
         with tab3:
-            render_fix_data_tab(df, results, col_types)
+            render_fix_data_tab(df, results, col_types, settings)
         
-        with tab4:
-            render_pipeline_tab(df)
+        with tab4:  # ✅ NEW: Skewness Analysis Tab
+            # Get the latest dataframe if it was modified in Fix Data tab
+            current_df = st.session_state.get('skew_fixed_df', df)
+            render_skewness_tab(current_df, settings)
         
         with tab5:
-            render_visualizations_tab(df, col_types, results)
+            render_pipeline_tab(df)
         
         with tab6:
-            render_pca_tab(df, results, col_types)
+            # Use skewness-corrected data if available for better visualizations
+            viz_df = st.session_state.get('skew_fixed_df', df)
+            render_visualizations_tab(viz_df, col_types, results)
         
         with tab7:
-            render_code_tab(col_types, settings)
+            # Use skewness-corrected data if available for better PCA results
+            pca_df = st.session_state.get('skew_fixed_df', df)
+            render_pca_tab(pca_df, results, col_types)
         
         with tab8:
-            render_deep_profile_tab(df)
+            render_code_tab(col_types, settings)
         
         with tab9:
-            render_compare_tab(df)
+            render_deep_profile_tab(df)
         
         with tab10:
+            render_compare_tab(df)
+        
+        with tab11:
             render_synthetic_tab(df, col_types)
         
         # Export buttons
@@ -278,7 +287,7 @@ def render_landing_page():
         if st.button(
             "🎲 Generate Test Dataset with Anomalies",
             type="primary",
-            use_container_width=True
+            width="stretch"
         ):
             sample_df = generate_test_dataset()
             st.download_button(
@@ -286,7 +295,7 @@ def render_landing_page():
                 sample_df.to_csv(index=False),
                 "test_data_with_anomalies.csv",
                 "text/csv",
-                use_container_width=True
+                width="stretch"
             )
     
     # Quick tips
@@ -307,6 +316,7 @@ def render_landing_page():
         - 📉 Dimensionality (PCA)
         - 🔒 PII (Personal Identifiable Information) detection
         - 🎲 Synthetic data generation
+        - 📐 Skewness detection & correction (NEW)
         
         **Features:**
         - One-click data fixes
@@ -314,8 +324,11 @@ def render_landing_page():
         - Exportable Python code
         - PDF reports
         - Compare multiple datasets
-        - 📊 Analysis history dashboard (NEW)
-        - 💾 Auto-save to database (NEW)
+        - Advanced skewness transformations (NEW)
+        - Bulk transformation capabilities (NEW)
+        - Transformation history & undo (NEW)
+        - 📊 Analysis history dashboard
+        - 💾 Auto-save to database
         """)
 
 

@@ -25,19 +25,19 @@ def render_pipeline_tab(df):
         st.markdown("**Add Operation:**")
         
         # Remove Duplicates button
-        if st.button("➕ Remove Duplicates", use_container_width=True):
+        if st.button("➕ Remove Duplicates", width="stretch"):
             st.session_state.pipeline_steps.append({"type": "dedup"})
             st.rerun()
         
-        # Fill Missing button
-        fill_method = st.selectbox("Fill Method", ["mean", "median", "mode"])
-        if st.button("➕ Fill Missing", use_container_width=True):
+        # Fill Missing button with MICE option
+        fill_method = st.selectbox("Fill Method", ["mean", "median", "mode", "mice"])
+        if st.button("➕ Fill Missing", width="stretch"):
             st.session_state.pipeline_steps.append({"type": "fill", "method": fill_method})
             st.rerun()
         
         # Drop Column button
         drop_col = st.selectbox("Column to Drop", [""] + list(df.columns))
-        if st.button("➕ Drop Column", use_container_width=True, disabled=not drop_col):
+        if st.button("➕ Drop Column", width="stretch", disabled=not drop_col):
             st.session_state.pipeline_steps.append({"type": "drop", "col": drop_col})
             st.rerun()
     
@@ -73,10 +73,33 @@ def render_pipeline_tab(df):
                         method = step.get('method', 'mean')
                         num_cols = df_pipe.select_dtypes(include=np.number).columns
                         
-                        if method == 'mean':
+                        if method == 'mice':
+                            # MICE imputation using sklearn's IterativeImputer
+                            try:
+                                from sklearn.experimental import enable_iterative_imputer
+                                from sklearn.impute import IterativeImputer
+                                
+                                if len(num_cols) > 0:
+                                    imputer = IterativeImputer(random_state=42, max_iter=10)
+                                    df_pipe[num_cols] = imputer.fit_transform(df_pipe[num_cols])
+                                
+                                # For categorical, use mode
+                                cat_cols = df_pipe.select_dtypes(include=['object', 'category']).columns
+                                for col in cat_cols:
+                                    if df_pipe[col].isna().sum() > 0:
+                                        mode_val = df_pipe[col].mode()
+                                        if not mode_val.empty:
+                                            df_pipe[col].fillna(mode_val[0], inplace=True)
+                            except Exception as e:
+                                st.warning(f"⚠️ MICE failed: {str(e)}. Falling back to mean.")
+                                df_pipe[num_cols] = df_pipe[num_cols].fillna(df_pipe[num_cols].mean())
+                        
+                        elif method == 'mean':
                             df_pipe[num_cols] = df_pipe[num_cols].fillna(df_pipe[num_cols].mean())
+                        
                         elif method == 'median':
                             df_pipe[num_cols] = df_pipe[num_cols].fillna(df_pipe[num_cols].median())
+                        
                         elif method == 'mode':
                             for col in num_cols:
                                 mode_val = df_pipe[col].mode()
@@ -125,7 +148,7 @@ def render_pipeline_tab(df):
                     df_pipe.to_csv(index=False).encode('utf-8'),
                     "pipeline_output.csv",
                     "text/csv",
-                    use_container_width=True
+                    width="stretch"
                 )
             
             with col_download2:
@@ -134,5 +157,5 @@ def render_pipeline_tab(df):
                     code,
                     "pipeline.py",
                     "text/plain",
-                    use_container_width=True
+                    width="stretch"
                 )

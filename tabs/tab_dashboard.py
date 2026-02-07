@@ -92,7 +92,7 @@ def render_dashboard_tab():
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # ==================== CHARTS ====================
+    # ==================== CHART - FULL WIDTH ====================
     st.markdown("### 📊 Analysis Trends")
     
     analyses = get_user_analyses(limit=100)
@@ -103,53 +103,29 @@ def render_dashboard_tab():
         df_analyses['created_at'] = pd.to_datetime(df_analyses['created_at'])
         df_analyses = df_analyses.sort_values('created_at')
         
-        col1, col2 = st.columns(2)
+        # Health score trend - FULL WIDTH
+        fig_trend = go.Figure()
+        fig_trend.add_trace(go.Scatter(
+            x=df_analyses['created_at'],
+            y=df_analyses['health_score'],
+            mode='lines+markers',
+            name='Health Score',
+            line=dict(color='#667eea', width=3),
+            marker=dict(size=8),
+            fill='tozeroy',
+            fillcolor='rgba(102, 126, 234, 0.1)'
+        ))
         
-        with col1:
-            # Health score trend
-            fig_trend = go.Figure()
-            fig_trend.add_trace(go.Scatter(
-                x=df_analyses['created_at'],
-                y=df_analyses['health_score'],
-                mode='lines+markers',
-                name='Health Score',
-                line=dict(color='#667eea', width=3),
-                marker=dict(size=8),
-                fill='tozeroy',
-                fillcolor='rgba(102, 126, 234, 0.1)'
-            ))
-            
-            fig_trend.update_layout(
-                title="Health Score Over Time",
-                xaxis_title="Date",
-                yaxis_title="Health Score (%)",
-                height=300,
-                template="plotly_dark",
-                hovermode='x unified'
-            )
-            
-            st.plotly_chart(fig_trend, use_container_width=True)
+        fig_trend.update_layout(
+            title="Health Score Over Time",
+            xaxis_title="Date",
+            yaxis_title="Health Score (%)",
+            height=400,
+            template="plotly_dark",
+            hovermode='x unified'
+        )
         
-        with col2:
-            # Issues breakdown
-            total_high = df_analyses['issues_high'].sum()
-            total_medium = df_analyses['issues_medium'].sum()
-            total_low = df_analyses['issues_low'].sum()
-            
-            fig_pie = go.Figure(data=[go.Pie(
-                labels=['High', 'Medium', 'Low'],
-                values=[total_high, total_medium, total_low],
-                marker=dict(colors=['#ef4444', '#f59e0b', '#10b981']),
-                hole=0.4
-            )])
-            
-            fig_pie.update_layout(
-                title="Issues by Severity",
-                height=300,
-                template="plotly_dark"
-            )
-            
-            st.plotly_chart(fig_pie, use_container_width=True)
+        st.plotly_chart(fig_trend)
     
     # ==================== ANALYSIS HISTORY ====================
     st.markdown("### 📋 Analysis History")
