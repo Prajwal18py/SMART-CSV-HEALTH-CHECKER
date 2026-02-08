@@ -393,9 +393,10 @@ def render_deep_profile_tab(df):
     st.markdown("---")
     
     # ========================================================
-    # DETAILED COLUMN PROFILING
+    # DETAILED COLUMN PROFILING (USES ORIGINAL DATA)
     # ========================================================
     st.markdown("### 📊 Column-by-Column Report")
+    st.caption("⚠️ **Note:** This analysis uses the **ORIGINAL uploaded data** (not cleaned versions from Fix Data tab)")
     selected_profile_col = st.selectbox("Select column to inspect:", df.columns)
     
     col_data = df[selected_profile_col]

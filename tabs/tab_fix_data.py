@@ -1,6 +1,6 @@
 """
 Tab 3: Fix Data
-Auto-cleaning, AI repair, wizard, and interactive editor
+Auto-cleaning, AI repair, wizard, and interactive editor with comprehensive outlier handling
 """
 import streamlit as st
 import pandas as pd
@@ -15,19 +15,52 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
     
     st.subheader("🛠️ Auto-Clean Your Data")
     
+    # ✨ WORKFLOW GUIDANCE BANNER
+    st.info(
+        "💡 **Recommended Workflow:** Clean your data here → Then visit the **📐 Skewness tab** to normalize distributions → Finally check **📊 Visualizations** and **📉 PCA** tabs!",
+        icon="🚀"
+    )
+    st.markdown("---")
+    
     # Extract settings from sidebar
     imputation_method = sidebar_settings.get('imputation_method', 'mean')
+    outlier_sensitivity = sidebar_settings.get('outlier_sensitivity', 1.5)
     
     # Initialize session state for global cleaned data if not exists
     if 'global_cleaned_df' not in st.session_state:
         st.session_state.global_cleaned_df = None
 
     # =================================================================
+    # 🎯 OUTLIER DETECTION ALERT
+    # =================================================================
+    # Count outliers using IQR method
+    outlier_count = 0
+    outlier_cols = []
+    
+    for col in df.select_dtypes(include=[np.number]).columns:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        outliers = df[((df[col] < (Q1 - outlier_sensitivity * IQR)) | 
+                       (df[col] > (Q3 + outlier_sensitivity * IQR)))]
+        if len(outliers) > 0:
+            outlier_count += len(outliers)
+            outlier_cols.append(col)
+    
+    if outlier_count > 0:
+        st.warning(
+            f"⚠️ **{outlier_count} outlier(s) detected across {len(outlier_cols)} column(s)!** "
+            f"Use the **Smart Cleaning Wizard** below or the **Manual Outlier Treatment** section to handle them.",
+            icon="📊"
+        )
+    
+    # =================================================================
     # ⚡ GLOBAL STRATEGY DASHBOARD (Redesigned)
     # =================================================================
     with st.container():
         # 1. Status Banner
         st.info(f"⚙️ **Active Strategy:** You selected **'{imputation_method.upper()}'** in the Sidebar.", icon="ℹ️")
+        st.caption("⚠️ **Note:** This strategy handles missing values only. Outliers require separate treatment below.")
         
         # 2. Action Row (Text + Button)
         c_text, c_btn = st.columns([0.7, 0.3], gap="medium")
@@ -113,6 +146,8 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             with col_res1:
                 st.success(f"✅ **Success!** Data processed using {imputation_method.upper()}.")
                 st.markdown(f"**Rows:** {rows_kept} (Original: {rows_orig})")
+                if outlier_count > 0:
+                    st.warning(f"⚠️ **Note:** {outlier_count} outliers still present. Use wizard or manual section below to handle them.")
             
             with col_res2:
                  st.download_button(
@@ -125,7 +160,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
 
             # Data Preview (Centered and Full Width)
             with st.expander("👀 View Cleaned Data Result", expanded=True):
-                st.dataframe(res_df.head(50))  # ✅ FIXED: Removed use_container_width
+                st.dataframe(res_df.head(50), height=400)
 
     st.markdown("---")
 
@@ -138,6 +173,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
     
     with st.expander("🤖 AI Auto-Repair (Advanced)", expanded=start_expanded):
         st.caption("Uses Random Forest to predict and fill missing values (Best for MICE preference).")
+        st.warning("⚠️ **Note:** This handles missing values only. Outliers require separate treatment below.", icon="ℹ️")
         
         if st.button("🚀 Run AI Repair", key="ai_repair_btn"):
             cols_with_missing = [c for c in df.columns if df[c].isna().sum() > 0]
@@ -164,7 +200,13 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                 
                 if repaired_cols:
                     st.success(f"✨ Repaired {len(repaired_cols)} columns: {', '.join(repaired_cols)}")
+                    if outlier_count > 0:
+                        st.warning(f"⚠️ **Note:** {outlier_count} outliers still present. Use wizard or manual section below to handle them.")
+                    
                     st.dataframe(df_repaired.head(20))
+                    
+                    # ✅ SAVE TO SESSION STATE for Skewness tab
+                    st.session_state['global_cleaned_df'] = df_repaired
                     
                     # ✅ SAVE OPERATIONS FOR CODE GENERATION
                     st.session_state['cleaning_ops'] = {
@@ -174,6 +216,9 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                         'impute_mode': [],
                         'drop_rows': False
                     }
+                    
+                    # ✨ REMINDER MESSAGE
+                    st.info("💡 **Next Step:** Visit the **Skewness tab** to normalize your data distribution!", icon="📐")
                     
                     st.download_button(
                         "⬇️ Download AI-Repaired CSV",
@@ -185,11 +230,11 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     )
 
     # =================================================================
-    # SMART CLEANING WIZARD
+    # SMART CLEANING WIZARD (ENHANCED WITH OUTLIER OPTIONS)
     # =================================================================
     st.markdown("---")
     st.markdown('<h2 class="gradient-header">🔮 Smart Cleaning Wizard</h2>', unsafe_allow_html=True)
-    st.caption("Let the wizard guide you through cleaning step-by-step")
+    st.caption("Let the wizard guide you through cleaning step-by-step (handles missing data, duplicates, and outliers)")
     
     if 'wizard_step' not in st.session_state:
         st.session_state.wizard_step = 0
@@ -240,7 +285,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     act = st.selectbox(
                         f"Action for {col}",
                         ["Skip", "Fill Mean", "Fill Mode", "Drop Column"],
-                        index=final_index, # <--- DYNAMICALLY SET DEFAULT
+                        index=final_index,
                         key=f"wiz_{col}"
                     )
                     st.session_state.wizard_actions[col] = act
@@ -266,19 +311,49 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                 st.session_state.wizard_step = 3
                 st.rerun()
         
-        # STEP 3: Outliers
+        # STEP 3: Outliers (ENHANCED)
         elif current_step == 3:
             st.markdown("### Step 3: Handle Outliers")
             
-            # Use sensitivity from sidebar for thresholding if needed, 
-            # though here we rely on the pre-calculated results
+            # Count outliers per column
+            outlier_details = []
+            for col in df.select_dtypes(include=[np.number]).columns:
+                Q1 = df[col].quantile(0.25)
+                Q3 = df[col].quantile(0.75)
+                IQR = Q3 - Q1
+                outliers_mask = (df[col] < (Q1 - outlier_sensitivity * IQR)) | (df[col] > (Q3 + outlier_sensitivity * IQR))
+                outlier_cnt = outliers_mask.sum()
+                
+                if outlier_cnt > 0:
+                    outlier_details.append({
+                        'Column': col,
+                        'Outliers': outlier_cnt,
+                        'Percentage': f"{outlier_cnt / len(df) * 100:.1f}%"
+                    })
             
-            if not results['stats']['outlier_info'].empty:
-                st.dataframe(results['stats']['outlier_info'])
-                st.session_state.wizard_actions['outliers'] = st.radio(
-                    "Handle Outliers?",
-                    ["Keep", "Remove Rows"]
+            if outlier_details:
+                st.dataframe(pd.DataFrame(outlier_details), hide_index=True)
+                
+                st.markdown("#### Choose Outlier Treatment Method:")
+                st.session_state.wizard_actions['outlier_method'] = st.radio(
+                    "How would you like to handle outliers?",
+                    [
+                        "Keep all outliers",
+                        "Remove outlier rows (IQR method)",
+                        "Cap outliers (Winsorize)",
+                        "Log transform numeric columns"
+                    ],
+                    help="• Keep: No changes\n• Remove: Delete rows with outliers\n• Cap: Replace outliers with boundary values\n• Log: Apply log transformation to reduce skew"
                 )
+                
+                # If user chooses cap or log, let them select columns
+                if st.session_state.wizard_actions.get('outlier_method') in ["Cap outliers (Winsorize)", "Log transform numeric columns"]:
+                    outlier_cols_list = [d['Column'] for d in outlier_details]
+                    st.session_state.wizard_actions['outlier_cols'] = st.multiselect(
+                        "Select columns to treat:",
+                        outlier_cols_list,
+                        default=outlier_cols_list
+                    )
             else:
                 st.success("✅ No significant outliers detected!")
             
@@ -292,7 +367,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             
             st.markdown("**Actions to be performed:**")
             for key, val in st.session_state.wizard_actions.items():
-                if val not in ["Skip", False]:
+                if val not in ["Skip", False, "Keep all outliers"]:
                     st.info(f"• {key}: {val}")
             
             if st.button("✨ Apply All Changes", type="primary"):
@@ -305,9 +380,11 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     'impute_mode': [],
                     'drop_cols': [],
                     'drop_duplicates': False,
-                    'remove_outliers': False
+                    'outlier_treatment': None,
+                    'outlier_cols': []
                 }
                 
+                # Apply missing data actions
                 for col, act in st.session_state.wizard_actions.items():
                     if col in df_clean.columns:
                         if act == "Fill Mean" and pd.api.types.is_numeric_dtype(df_clean[col]):
@@ -322,19 +399,50 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                             df_clean = df_clean.drop(columns=[col])
                             wizard_ops['drop_cols'].append(col)
                 
+                # Apply deduplication
                 if st.session_state.wizard_actions.get('dedup'):
                     df_clean = df_clean.drop_duplicates()
                     wizard_ops['drop_duplicates'] = True
                 
-                if st.session_state.wizard_actions.get('outliers') == "Remove Rows":
+                # Apply outlier treatment
+                outlier_method = st.session_state.wizard_actions.get('outlier_method', 'Keep all outliers')
+                
+                if outlier_method == "Remove outlier rows (IQR method)":
                     for col in df_clean.select_dtypes(include=[np.number]).columns:
                         Q1, Q3 = df_clean[col].quantile(0.25), df_clean[col].quantile(0.75)
                         IQR = Q3 - Q1
                         df_clean = df_clean[
-                            ~((df_clean[col] < (Q1 - 1.5 * IQR)) |
-                              (df_clean[col] > (Q3 + 1.5 * IQR)))
+                            ~((df_clean[col] < (Q1 - outlier_sensitivity * IQR)) |
+                              (df_clean[col] > (Q3 + outlier_sensitivity * IQR)))
                         ]
-                    wizard_ops['remove_outliers'] = True
+                    wizard_ops['outlier_treatment'] = 'remove'
+                
+                elif outlier_method == "Cap outliers (Winsorize)":
+                    cols_to_cap = st.session_state.wizard_actions.get('outlier_cols', [])
+                    for col in cols_to_cap:
+                        if col in df_clean.columns and pd.api.types.is_numeric_dtype(df_clean[col]):
+                            Q1, Q3 = df_clean[col].quantile(0.25), df_clean[col].quantile(0.75)
+                            IQR = Q3 - Q1
+                            lower_bound = Q1 - outlier_sensitivity * IQR
+                            upper_bound = Q3 + outlier_sensitivity * IQR
+                            df_clean[col] = df_clean[col].clip(lower=lower_bound, upper=upper_bound)
+                    wizard_ops['outlier_treatment'] = 'cap'
+                    wizard_ops['outlier_cols'] = cols_to_cap
+                
+                elif outlier_method == "Log transform numeric columns":
+                    cols_to_log = st.session_state.wizard_actions.get('outlier_cols', [])
+                    for col in cols_to_log:
+                        if col in df_clean.columns and pd.api.types.is_numeric_dtype(df_clean[col]):
+                            # Ensure positive values for log
+                            if (df_clean[col] > 0).all():
+                                df_clean[col] = np.log1p(df_clean[col])
+                            else:
+                                st.warning(f"⚠️ Skipped log transform for '{col}' (contains non-positive values)")
+                    wizard_ops['outlier_treatment'] = 'log'
+                    wizard_ops['outlier_cols'] = cols_to_log
+                
+                # ✅ SAVE TO SESSION STATE for Skewness tab
+                st.session_state['global_cleaned_df'] = df_clean
                 
                 # ✅ SAVE OPERATIONS FOR CODE GENERATION
                 st.session_state['cleaning_ops'] = wizard_ops
@@ -345,6 +453,9 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     f"({len(df) - len(df_clean)} removed)"
                 )
                 st.dataframe(df_clean.head(20))
+                
+                # ✨ REMINDER MESSAGE
+                st.info("💡 **Next Step:** Visit the **Skewness tab** to normalize your data distribution!", icon="📐")
                 
                 st.download_button(
                     "⬇️ Download Cleaned CSV",
@@ -360,12 +471,156 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                 st.rerun()
 
     # =================================================================
+    # MANUAL OUTLIER TREATMENT SECTION (NEW)
+    # =================================================================
+    st.markdown("---")
+    st.markdown('<h3 class="gradient-header">🎯 Manual Outlier Treatment</h3>', unsafe_allow_html=True)
+    st.caption("Fine-tune outlier handling for specific columns")
+    
+    with st.expander("🔧 Configure Outlier Treatment", expanded=False):
+        # Select columns for outlier treatment
+        numeric_cols = col_types['numeric']
+        
+        if numeric_cols:
+            outlier_treat_cols = st.multiselect(
+                "📊 Select numeric columns to treat for outliers:",
+                numeric_cols,
+                help="Choose columns where you want to detect and handle outliers"
+            )
+            
+            if outlier_treat_cols:
+                # Method selector
+                outlier_treat_method = st.selectbox(
+                    "🛠️ Treatment method:",
+                    [
+                        "Remove outlier rows (IQR method)",
+                        "Cap outliers (Winsorize)",
+                        "Log transform",
+                        "Square root transform",
+                        "Z-score filter (remove beyond threshold)"
+                    ],
+                    help="Different methods for handling outliers"
+                )
+                
+                # Sensitivity/threshold slider
+                col_slider1, col_slider2 = st.columns(2)
+                
+                with col_slider1:
+                    if "Z-score" in outlier_treat_method:
+                        threshold = st.slider(
+                            "Z-score threshold:",
+                            1.0, 4.0, 3.0, 0.5,
+                            help="Remove values beyond this many standard deviations from mean"
+                        )
+                    else:
+                        threshold = st.slider(
+                            "IQR multiplier:",
+                            1.0, 3.0, outlier_sensitivity, 0.5,
+                            help="Higher = more lenient (fewer outliers detected)"
+                        )
+                
+                with col_slider2:
+                    # Show preview of how many outliers will be affected
+                    preview_count = 0
+                    for col in outlier_treat_cols:
+                        if col in df.columns:
+                            if "Z-score" in outlier_treat_method:
+                                z_scores = np.abs((df[col] - df[col].mean()) / df[col].std())
+                                preview_count += (z_scores > threshold).sum()
+                            else:
+                                Q1, Q3 = df[col].quantile(0.25), df[col].quantile(0.75)
+                                IQR = Q3 - Q1
+                                outliers = (df[col] < (Q1 - threshold * IQR)) | (df[col] > (Q3 + threshold * IQR))
+                                preview_count += outliers.sum()
+                    
+                    st.metric(
+                        "Outliers to treat:",
+                        preview_count,
+                        help="Number of outlier values that will be affected"
+                    )
+                
+                # Apply button
+                if st.button("⚡ Apply Outlier Treatment", type="primary", width="stretch"):
+                    df_outlier_clean = df.copy()
+                    
+                    # Track operations
+                    outlier_ops = {
+                        'method': 'manual_outlier',
+                        'treatment': outlier_treat_method,
+                        'columns': outlier_treat_cols,
+                        'threshold': threshold
+                    }
+                    
+                    with st.status("🔧 Treating outliers...", expanded=True) as status:
+                        if outlier_treat_method == "Remove outlier rows (IQR method)":
+                            for col in outlier_treat_cols:
+                                if col in df_outlier_clean.columns:
+                                    Q1, Q3 = df_outlier_clean[col].quantile(0.25), df_outlier_clean[col].quantile(0.75)
+                                    IQR = Q3 - Q1
+                                    df_outlier_clean = df_outlier_clean[
+                                        ~((df_outlier_clean[col] < (Q1 - threshold * IQR)) |
+                                          (df_outlier_clean[col] > (Q3 + threshold * IQR)))
+                                    ]
+                        
+                        elif outlier_treat_method == "Cap outliers (Winsorize)":
+                            for col in outlier_treat_cols:
+                                if col in df_outlier_clean.columns:
+                                    Q1, Q3 = df_outlier_clean[col].quantile(0.25), df_outlier_clean[col].quantile(0.75)
+                                    IQR = Q3 - Q1
+                                    lower_bound = Q1 - threshold * IQR
+                                    upper_bound = Q3 + threshold * IQR
+                                    df_outlier_clean[col] = df_outlier_clean[col].clip(lower=lower_bound, upper=upper_bound)
+                        
+                        elif outlier_treat_method == "Log transform":
+                            for col in outlier_treat_cols:
+                                if col in df_outlier_clean.columns:
+                                    if (df_outlier_clean[col] > 0).all():
+                                        df_outlier_clean[col] = np.log1p(df_outlier_clean[col])
+                                    else:
+                                        st.warning(f"⚠️ Skipped '{col}' (contains non-positive values)")
+                        
+                        elif outlier_treat_method == "Square root transform":
+                            for col in outlier_treat_cols:
+                                if col in df_outlier_clean.columns:
+                                    if (df_outlier_clean[col] >= 0).all():
+                                        df_outlier_clean[col] = np.sqrt(df_outlier_clean[col])
+                                    else:
+                                        st.warning(f"⚠️ Skipped '{col}' (contains negative values)")
+                        
+                        elif "Z-score" in outlier_treat_method:
+                            for col in outlier_treat_cols:
+                                if col in df_outlier_clean.columns:
+                                    z_scores = np.abs((df_outlier_clean[col] - df_outlier_clean[col].mean()) / df_outlier_clean[col].std())
+                                    df_outlier_clean = df_outlier_clean[z_scores <= threshold]
+                        
+                        status.update(label="✅ Outlier treatment complete!", state="complete", expanded=False)
+                    
+                    # Save results
+                    st.session_state['global_cleaned_df'] = df_outlier_clean
+                    st.session_state['cleaning_ops'] = outlier_ops
+                    
+                    rows_removed = len(df) - len(df_outlier_clean)
+                    st.success(f"✅ Treatment applied! {rows_removed} rows affected.")
+                    
+                    # Show preview
+                    st.dataframe(df_outlier_clean.head(20))
+                    
+                    # Download button
+                    st.download_button(
+                        "⬇️ Download Outlier-Treated CSV",
+                        df_outlier_clean.to_csv(index=False).encode('utf-8'),
+                        "outlier_treated_data.csv",
+                        "text/csv",
+                        width="stretch"
+                    )
+        else:
+            st.info("ℹ️ No numeric columns available for outlier treatment.")
+
+    # =================================================================
     # MANUAL CLEANING OPTIONS
     # =================================================================
     st.markdown("---")
-    
-    # Pre-select manual options based on sidebar settings? 
-    # Usually better to leave manual as manual, but we can default the checkboxes.
+    st.markdown('<h3 class="gradient-header">🔧 Manual Cleaning Options</h3>', unsafe_allow_html=True)
     
     cleaning_ops = {}
     c1, c2 = st.columns(2)
@@ -397,12 +652,12 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
         cleaning_ops['impute_mean'] = st.multiselect(
             "🔢 Fill Numeric (Mean)",
             col_types['numeric'],
-            default=default_mean  # <--- Linked to Sidebar
+            default=default_mean
         )
         cleaning_ops['impute_mode'] = st.multiselect(
             "📝 Fill Categorical (Mode)",
             col_types['categorical'],
-            default=default_mode  # <--- Linked to Sidebar
+            default=default_mode
         )
     
     df_clean_preview = df.copy()
@@ -447,6 +702,9 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
     
     with col_save:
         if st.button("✨ Save Changes & Download Cleaned Data", type="primary", width="stretch"):
+            # ✅ SAVE TO SESSION STATE for Skewness tab
+            st.session_state['global_cleaned_df'] = edited_df
+            
             # ✅ SAVE OPERATIONS FOR CODE GENERATION
             cleaning_ops['method'] = 'manual'
             st.session_state['cleaning_ops'] = cleaning_ops
@@ -461,6 +719,9 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             
             st.toast("Data cleaned and saved successfully!", icon="✨")
             st.success(f"✅ Auto-cleaned {ops_count} issues + saved manual edits!")
+            
+            # ✨ REMINDER MESSAGE
+            st.info("💡 **Next Step:** Visit the **Skewness tab** to normalize your data distribution!", icon="📐")
             
             st.download_button(
                 "⬇️ Download Cleaned CSV",

@@ -182,22 +182,31 @@ def main():
         with tab3:
             render_fix_data_tab(df, results, col_types, settings)
         
-        with tab4:  # ✅ NEW: Skewness Analysis Tab
-            # Get the latest dataframe if it was modified in Fix Data tab
-            current_df = st.session_state.get('skew_fixed_df', df)
+        with tab4:
+            current_df = st.session_state.get('global_cleaned_df')
+            if current_df is None:
+                current_df = st.session_state.get('skew_fixed_df')
+            if current_df is None:
+                current_df = df
             render_skewness_tab(current_df, settings)
         
         with tab5:
             render_pipeline_tab(df)
         
         with tab6:
-            # Use skewness-corrected data if available for better visualizations
-            viz_df = st.session_state.get('skew_fixed_df', df)
+            viz_df = st.session_state.get('skew_fixed_df')
+            if viz_df is None:
+                viz_df = st.session_state.get('global_cleaned_df')
+            if viz_df is None:
+                viz_df = df
             render_visualizations_tab(viz_df, col_types, results)
         
         with tab7:
-            # Use skewness-corrected data if available for better PCA results
-            pca_df = st.session_state.get('skew_fixed_df', df)
+            pca_df = st.session_state.get('skew_fixed_df')
+            if pca_df is None:
+                pca_df = st.session_state.get('global_cleaned_df')
+            if pca_df is None:
+                pca_df = df
             render_pca_tab(pca_df, results, col_types)
         
         with tab8:

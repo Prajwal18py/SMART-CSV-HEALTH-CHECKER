@@ -19,23 +19,74 @@ def render_skewness_tab(df, sidebar_settings=None):
     """
     st.subheader("📐 Skewness Analysis & Correction")
     
+    # ========================================================
+    # ✨ DATA SOURCE SELECTOR - Use Cleaned Data if Available
+    # ========================================================
+    cleaned_data_available = False
+    data_sources = {"📄 Original Uploaded Data": df}
+    
+    # Check for cleaned data from Fix Data tab
+    if 'global_cleaned_df' in st.session_state and st.session_state.global_cleaned_df is not None:
+        data_sources["✅ Cleaned Data (from Fix Data tab)"] = st.session_state.global_cleaned_df
+        cleaned_data_available = True
+    
+    # Show data source selector if cleaned data exists
+    if cleaned_data_available:
+        st.info("💡 **Pro Tip:** Cleaned data from the Fix Data tab is available! Use it for better skewness analysis.", icon="✨")
+        
+        col_selector, col_info = st.columns([2, 1])
+        
+        with col_selector:
+            selected_source = st.selectbox(
+                "📊 Choose Data Source",
+                options=list(data_sources.keys()),
+                index=1,  # Default to cleaned data
+                help="Use cleaned data for more accurate skewness analysis"
+            )
+        
+        with col_info:
+            if selected_source == "✅ Cleaned Data (from Fix Data tab)":
+                st.metric("Missing Values", "0", delta="✅ Clean", delta_color="off")
+            else:
+                missing_count = df.isna().sum().sum()
+                st.metric("Missing Values", missing_count, delta="⚠️ Has nulls", delta_color="inverse")
+        
+        # Use selected data source
+        working_df = data_sources[selected_source].copy()
+        
+        st.markdown("---")
+    else:
+        # No cleaned data available - inform user
+        missing_count = df.isna().sum().sum()
+        
+        if missing_count > 0:
+            st.warning(
+                f"⚠️ **{missing_count} missing values detected.** "
+                "For better results, clean your data first in the **Fix Data** tab, "
+                "then return here to use the cleaned version!",
+                icon="💡"
+            )
+        
+        # Use original data
+        working_df = df.copy()
+    
     # Initialize session state for tracking transformations
     if 'transformations_log' not in st.session_state:
         st.session_state['transformations_log'] = []
     if 'original_df_backup' not in st.session_state:
-        st.session_state['original_df_backup'] = df.copy()
+        st.session_state['original_df_backup'] = working_df.copy()
     
     # ========================================================
     # 1. IDENTIFY SKEWED COLUMNS
     # ========================================================
-    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    numeric_cols = working_df.select_dtypes(include=[np.number]).columns.tolist()
     
     if len(numeric_cols) == 0:
         st.warning("⚠️ No numeric columns found in the dataset.")
         return
     
     # Calculate skewness for all numeric columns
-    skew_vals = df[numeric_cols].apply(lambda x: x.dropna().skew()).sort_values(ascending=False)
+    skew_vals = working_df[numeric_cols].apply(lambda x: x.dropna().skew()).sort_values(ascending=False)
     
     # Filter for high skewness (absolute value > 1.0 is standard threshold)
     high_skew = skew_vals[abs(skew_vals) > 1.0]
@@ -160,7 +211,7 @@ def render_skewness_tab(df, sidebar_settings=None):
         with col_act:
             if selected_col:
                 # Get original data
-                original_data = df[selected_col].dropna()
+                original_data = working_df[selected_col].dropna()
                 original_skew = original_data.skew()
                 
                 # Auto-recommend best transformation
@@ -272,8 +323,8 @@ def render_skewness_tab(df, sidebar_settings=None):
                     with apply_col1:
                         if st.button(f"✨ Apply Transformation", type="primary", width="stretch"):
                             # ✅ FIX: Create full-length series with NaNs preserved
-                            full_transformed = pd.Series(index=df.index, dtype=float)
-                            full_transformed.loc[df[selected_col].notna()] = transformed_data
+                            full_transformed = pd.Series(index=working_df.index, dtype=float)
+                            full_transformed.loc[working_df[selected_col].notna()] = transformed_data
                             
                             # Store transformation log
                             st.session_state['transformations_log'].append({
@@ -286,8 +337,8 @@ def render_skewness_tab(df, sidebar_settings=None):
                             })
                             
                             # Apply to dataframe
-                            df[selected_col] = full_transformed
-                            st.session_state['skew_fixed_df'] = df
+                            working_df[selected_col] = full_transformed
+                            st.session_state['skew_fixed_df'] = working_df
                             
                             if shift > 0:
                                 st.toast(f"ℹ️ Data shifted by {shift:.2f} to handle negative/zero values", icon="ℹ️")
@@ -356,7 +407,7 @@ def render_skewness_tab(df, sidebar_settings=None):
                         for idx, col in enumerate(bulk_columns):
                             st.write(f"✨ Processing: **{col}**")
                             
-                            original_data = df[col].dropna()
+                            original_data = working_df[col].dropna()
                             original_skew = original_data.skew()
                             
                             if bulk_method == "Auto (Best for Each)":
@@ -370,11 +421,11 @@ def render_skewness_tab(df, sidebar_settings=None):
                             new_skew = pd.Series(transformed_data).skew()
                             
                             # ✅ FIX: Create full-length series with NaNs preserved
-                            full_transformed = pd.Series(index=df.index, dtype=float)
-                            full_transformed.loc[df[col].notna()] = transformed_data
+                            full_transformed = pd.Series(index=working_df.index, dtype=float)
+                            full_transformed.loc[working_df[col].notna()] = transformed_data
                             
                             # Apply transformation
-                            df[col] = full_transformed
+                            working_df[col] = full_transformed
                             
                             # Log transformation
                             st.session_state['transformations_log'].append({
@@ -403,7 +454,7 @@ def render_skewness_tab(df, sidebar_settings=None):
                         # Update status to complete
                         status.update(label="✅ Transformation Complete!", state="complete", expanded=False)
                         
-                        st.session_state['skew_fixed_df'] = df
+                        st.session_state['skew_fixed_df'] = working_df
                         st.success(f"✅ Successfully transformed {len(bulk_columns)} columns!")
                         
                         # Show results
@@ -419,7 +470,7 @@ def render_skewness_tab(df, sidebar_settings=None):
                             st.success(f"🎉 {len(bulk_columns)} columns transformed successfully!")
                         
                         with quick_dl_col2:
-                            csv_data = df.to_csv(index=False)
+                            csv_data = working_df.to_csv(index=False)
                             st.download_button(
                                 "📥 Download Transformed Data",
                                 data=csv_data,
@@ -436,8 +487,8 @@ def render_skewness_tab(df, sidebar_settings=None):
                 st.markdown("#### Preview: Selected Columns")
                 preview_df = pd.DataFrame({
                     'Column': bulk_columns,
-                    'Current Skew': [f"{df[col].dropna().skew():.3f}" for col in bulk_columns],
-                    'Severity': ['High' if abs(df[col].dropna().skew()) > 1.0 else 'Moderate' 
+                    'Current Skew': [f"{working_df[col].dropna().skew():.3f}" for col in bulk_columns],
+                    'Severity': ['High' if abs(working_df[col].dropna().skew()) > 1.0 else 'Moderate' 
                                for col in bulk_columns]
                 })
                 st.dataframe(preview_df, hide_index=True)
@@ -498,8 +549,8 @@ def render_skewness_tab(df, sidebar_settings=None):
             with btn_col2:
                 # Reset all transformations
                 if st.button("↩️ Reset All Transformations", width="stretch"):
-                    df = st.session_state['original_df_backup'].copy()
-                    st.session_state['skew_fixed_df'] = df
+                    working_df = st.session_state['original_df_backup'].copy()
+                    st.session_state['skew_fixed_df'] = working_df
                     st.session_state['transformations_log'] = []
                     st.success("✅ All transformations have been reset!")
                     st.rerun()
