@@ -254,91 +254,267 @@ def main():
 
 
 def render_landing_page():
-    """Render landing page when no file is uploaded"""
+    """Render enhanced landing page when no file is uploaded"""
+    
+    # Hero section
+    st.markdown('''
+    <div style="text-align: center; padding: 2rem 0 3rem 0;">
+        <h1 style="font-size: 3rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+                   margin-bottom: 1rem; font-weight: 800;">
+            Smart CSV AI Studio
+        </h1>
+        <p style="font-size: 1.3rem; color: #94a3b8; margin-bottom: 0.5rem;">
+            Enterprise-Grade Data Quality & Privacy Platform
+        </p>
+        <p style="font-size: 1rem; color: #64748b;">
+            AI-Powered Analysis • Privacy Protection • Statistical Transformation
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
+    
     st.info("👆 Upload a CSV file to begin AI-powered analysis")
     st.write("")
     
-    # Feature highlights
+    # Main feature cards - 3 columns
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown('''
-        <div style="text-align: center; padding: 2rem; background: rgba(99, 102, 241, 0.1); border-radius: 12px;">
+        <div style="text-align: center; padding: 2rem; background: rgba(99, 102, 241, 0.1); 
+                    border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2);">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🤖</div>
-            <h3 style="color: #a5b4fc;">AI Detection</h3>
-            <p style="color: #94a3b8;">Machine learning finds complex anomalies traditional methods miss</p>
+            <h3 style="color: #a5b4fc; margin-bottom: 1rem;">AI Detection</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem;">Machine learning finds complex anomalies traditional methods miss</p>
         </div>
         ''', unsafe_allow_html=True)
     
     with col2:
         st.markdown('''
-        <div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.1); border-radius: 12px;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
-            <h3 style="color: #6ee7b7;">Deep Analytics</h3>
-            <p style="color: #94a3b8;">PCA, correlations, and comprehensive statistics</p>
+        <div style="text-align: center; padding: 2rem; background: rgba(16, 185, 129, 0.1); 
+                    border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h3 style="color: #6ee7b7; margin-bottom: 1rem;">Privacy Shield</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem;">Enterprise PII detection & GDPR/CCPA compliance</p>
         </div>
         ''', unsafe_allow_html=True)
     
     with col3:
         st.markdown('''
-        <div style="text-align: center; padding: 2rem; background: rgba(139, 92, 246, 0.1); border-radius: 12px;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
-            <h3 style="color: #c4b5fd;">Auto-Fix</h3>
-            <p style="color: #94a3b8;">One-click cleaning with exportable Python code</p>
+        <div style="text-align: center; padding: 2rem; background: rgba(139, 92, 246, 0.1); 
+                    border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📐</div>
+            <h3 style="color: #c4b5fd; margin-bottom: 1rem;">Smart Transform</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem;">6 statistical transformations with auto-recommendations</p>
         </div>
         ''', unsafe_allow_html=True)
     
+    st.write("")
+    st.write("")
+    
+    # New Features Highlight Banner
+    st.markdown('''
+    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); 
+                padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3); 
+                text-align: center; margin-bottom: 2rem;">
+        <h3 style="color: #a5b4fc; margin-bottom: 0.5rem;">🆕 New Enterprise Features</h3>
+        <p style="color: #cbd5e1; margin-bottom: 0;">
+            Advanced Outlier Treatment • Skewness Correction • PII Protection • Privacy Risk Scoring
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Detailed capabilities - 2 columns
+    cap_col1, cap_col2 = st.columns(2)
+    
+    with cap_col1:
+        st.markdown('''
+        <div style="background: rgba(30, 41, 59, 0.5); padding: 1.5rem; border-radius: 10px; 
+                    border-left: 4px solid #667eea; height: 100%;">
+            <h4 style="color: #818cf8; margin-bottom: 1rem;">🛠️ Data Quality & Cleaning</h4>
+            <ul style="color: #94a3b8; font-size: 0.9rem; line-height: 1.8;">
+                <li><strong>5 Outlier Methods:</strong> IQR, Winsorize, Z-score, Log, Square Root</li>
+                <li><strong>6 Transformations:</strong> Box-Cox, Yeo-Johnson, Log, Cube Root & more</li>
+                <li><strong>Smart Wizard:</strong> Step-by-step data cleaning pipeline</li>
+                <li><strong>Auto-Fix:</strong> One-click cleaning with live preview</li>
+                <li><strong>Missing Values:</strong> MICE imputation & intelligent handling</li>
+            </ul>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    with cap_col2:
+        st.markdown('''
+        <div style="background: rgba(30, 41, 59, 0.5); padding: 1.5rem; border-radius: 10px; 
+                    border-left: 4px solid #10b981; height: 100%;">
+            <h4 style="color: #6ee7b7; margin-bottom: 1rem;">🔐 Enterprise Privacy Protection</h4>
+            <ul style="color: #94a3b8; font-size: 0.9rem; line-height: 1.8;">
+                <li><strong>8+ PII Types:</strong> Email, SSN, Credit Cards, Phone, IP, Names</li>
+                <li><strong>Risk Scoring:</strong> 0-100 privacy risk assessment</li>
+                <li><strong>Smart Masking:</strong> Intelligent pattern-based anonymization</li>
+                <li><strong>Compliance:</strong> GDPR, CCPA, HIPAA, PCI-DSS guidance</li>
+                <li><strong>Export Protected:</strong> Download masked or PII-free datasets</li>
+            </ul>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    st.write("")
+    
+    # Analytics capabilities
+    analytics_col1, analytics_col2 = st.columns(2)
+    
+    with analytics_col1:
+        st.markdown('''
+        <div style="background: rgba(30, 41, 59, 0.5); padding: 1.5rem; border-radius: 10px; 
+                    border-left: 4px solid #8b5cf6;">
+            <h4 style="color: #c4b5fd; margin-bottom: 1rem;">📊 Advanced Analytics</h4>
+            <ul style="color: #94a3b8; font-size: 0.9rem; line-height: 1.8;">
+                <li><strong>AI Anomaly Detection:</strong> Isolation Forest ML algorithms</li>
+                <li><strong>PCA Analysis:</strong> Dimensionality reduction & variance</li>
+                <li><strong>Q-Q Plots:</strong> Normality assessment for transformations</li>
+                <li><strong>Correlation Maps:</strong> Interactive heatmaps & relationships</li>
+                <li><strong>Statistical Profiling:</strong> Deep data characterization</li>
+            </ul>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    with analytics_col2:
+        st.markdown('''
+        <div style="background: rgba(30, 41, 59, 0.5); padding: 1.5rem; border-radius: 10px; 
+                    border-left: 4px solid #f59e0b;">
+            <h4 style="color: #fbbf24; margin-bottom: 1rem;">💻 Code & Export</h4>
+            <ul style="color: #94a3b8; font-size: 0.9rem; line-height: 1.8;">
+                <li><strong>Full Pipeline Code:</strong> Cleaning, outliers, transformations</li>
+                <li><strong>Reproducible:</strong> Export Python scripts for production</li>
+                <li><strong>Transformation Recipes:</strong> Save and reuse workflows</li>
+                <li><strong>History & Undo:</strong> Track all changes with rollback</li>
+                <li><strong>AI Training Code:</strong> Ready-to-use ML model scripts</li>
+            </ul>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    st.write("")
+    st.write("")
+    
     # Test dataset button
-    st.write("")
-    st.write("")
     col_center = st.columns([1, 2, 1])[1]
     with col_center:
         if st.button(
-            "🎲 Generate Test Dataset with Anomalies",
+            "🎲 GENERATE TEST DATASET WITH ANOMALIES",
             type="primary",
-            width="stretch"
+            use_container_width=True
         ):
             sample_df = generate_test_dataset()
+            st.success("✅ Test dataset generated! Download below:")
             st.download_button(
                 "⬇️ Download Sample CSV",
                 sample_df.to_csv(index=False),
                 "test_data_with_anomalies.csv",
                 "text/csv",
-                width="stretch"
+                use_container_width=True
             )
     
+    st.write("")
+    st.write("")
+    
     # Quick tips
-    st.write("")
-    st.write("")
-    with st.expander("💡 Quick Tips", expanded=False):
+    with st.expander("💡 Quick Start Guide", expanded=False):
         st.markdown("""
-        **Upload Requirements:**
-        - CSV files only
-        - Any size (optimized for files < 100MB)
-        - Handles missing values automatically
+        ### 📤 Upload Requirements
+        - **Format:** CSV files only
+        - **Size:** Optimized for files < 100MB (handles larger files too)
+        - **Data:** Automatically handles missing values, mixed types, and anomalies
         
-        **What We Analyze:**
-        - 🔍 Missing values and patterns
-        - 🤖 AI-powered anomaly detection (MICE imputation)
-        - 📊 Statistical distributions
-        - 🔗 Correlations and relationships
-        - 📉 Dimensionality (PCA)
-        - 🔒 PII (Personal Identifiable Information) detection
-        - 🎲 Synthetic data generation
-        - 📐 Skewness detection & correction (NEW)
+        ### 🎯 What We Analyze
         
-        **Features:**
-        - One-click data fixes
-        - Interactive visualizations
-        - Exportable Python code
-        - PDF reports
-        - Compare multiple datasets
-        - Advanced skewness transformations (NEW)
-        - Bulk transformation capabilities (NEW)
-        - Transformation history & undo (NEW)
-        - 📊 Analysis history dashboard
-        - 💾 Auto-save to database
+        **🔍 Data Quality**
+        - Missing value patterns & intelligent imputation
+        - Duplicate detection & removal
+        - Format consistency validation
+        - Range and constraint checking
+        
+        **🤖 AI-Powered Insights**
+        - MICE imputation analysis
+        - Isolation Forest anomaly detection
+        - Hidden pattern discovery
+        - Predictive quality metrics
+        
+        **📐 Statistical Analysis**
+        - Skewness detection (threshold > 1.0)
+        - Automatic transformation recommendations
+        - Q-Q plots for normality assessment
+        - Distribution analysis with before/after comparison
+        
+        **🔒 Privacy & Compliance**
+        - Automatic PII detection (Email, SSN, Phone, Credit Cards, IP, Names, etc.)
+        - Privacy risk scoring (0-100 scale)
+        - GDPR, CCPA, HIPAA, PCI-DSS compliance guidance
+        - One-click data anonymization
+        
+        **🛠️ Advanced Features**
+        - 5 outlier treatment methods (IQR, Winsorize, Z-score, Log, √)
+        - 6 transformation methods (Box-Cox, Yeo-Johnson, Log, Cube Root, √, Reciprocal)
+        - Bulk transformation with progress tracking
+        - Transformation history with undo capability
+        - Recipe export for reproducibility
+        
+        ### 📊 12 Powerful Tabs
+        
+        1. **Dashboard** - Analysis history & saved reports
+        2. **Overview** - Health score (A-F grading)
+        3. **AI Deep Dive** - ML anomaly detection
+        4. **Fix Data** - Smart cleaning wizard + 5 outlier methods
+        5. **Skewness** - 🆕 Complete transformation suite
+        6. **Pipeline** - Custom cleaning workflows
+        7. **Visualizations** - Interactive Plotly charts
+        8. **PCA** - Dimensionality reduction
+        9. **Code Export** - Python scripts for all operations
+        10. **Deep Profile** - 🆕 PII detection & privacy protection
+        11. **Compare** - Side-by-side dataset analysis
+        12. **Synthetic Data** - Generate realistic test data
+        
+        ### 🚀 Quick Workflow
+        
+        1. **Upload CSV** → Get instant health score
+        2. **Review AI Insights** → Identify anomalies & PII
+        3. **Fix Data** → Use Smart Wizard or manual tools
+        4. **Transform Skewness** → Auto-recommendations for normality
+        5. **Protect Privacy** → Mask or remove PII
+        6. **Export Code** → Get production-ready Python scripts
+        7. **Download** → Cleaned, transformed, privacy-safe dataset
+        
+        ### 💾 Auto-Save Features
+        - All analyses automatically saved to your dashboard
+        - Transformation history tracked with timestamps
+        - Session state preserved across tabs
+        - One-click access to previous work
         """)
+    
+    # Footer stats
+    st.write("")
+    st.write("")
+    st.markdown('''
+    <div style="text-align: center; padding: 2rem; background: rgba(30, 41, 59, 0.3); 
+                border-radius: 10px; border: 1px solid rgba(100, 116, 139, 0.3);">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
+            <div>
+                <h2 style="color: #818cf8; margin-bottom: 0.5rem;">12</h2>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Analysis Tabs</p>
+            </div>
+            <div>
+                <h2 style="color: #6ee7b7; margin-bottom: 0.5rem;">11</h2>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Transformation Methods</p>
+            </div>
+            <div>
+                <h2 style="color: #fbbf24; margin-bottom: 0.5rem;">8+</h2>
+                <p style="color: #94a3b8; font-size: 0.9rem;">PII Types Detected</p>
+            </div>
+            <div>
+                <h2 style="color: #c4b5fd; margin-bottom: 0.5rem;">100%</h2>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Free & Open</p>
+            </div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
