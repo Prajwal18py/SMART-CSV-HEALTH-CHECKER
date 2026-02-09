@@ -75,6 +75,42 @@ def main():
     # 2. Load custom CSS
     load_custom_css()
     
+    # Add enhanced CSS for landing page
+    st.markdown("""
+    <style>
+    /* Enhanced file uploader styling */
+    [data-testid="stFileUploader"] {
+        padding: 2rem !important;
+        border-radius: 16px !important;
+        border: 2px dashed rgba(99, 102, 241, 0.5) !important;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    [data-testid="stFileUploader"]:hover {
+        border-color: rgba(99, 102, 241, 0.8) !important;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2) !important;
+    }
+    
+    /* Enhanced button styling */
+    .stButton > button {
+        transition: all 0.3s ease !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3) !important;
+    }
+    
+    /* Smooth scroll behavior */
+    html {
+        scroll-behavior: smooth;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # 3. Show user info in sidebar
     show_user_info_sidebar()
     
@@ -262,6 +298,8 @@ def render_landing_page():
     # CSV Upload prompt FIRST - get users to action faster
     st.info("👆 **Upload a CSV file to begin AI-powered analysis**", icon="🚀")
     st.write("")
+    st.write("")
+    st.write("")
     
     # Hero tagline with gradient (title is in page config) - BELOW upload
     st.markdown('''
@@ -291,14 +329,25 @@ def render_landing_page():
                     border-radius: 16px; 
                     border: 1px solid rgba(99, 102, 241, 0.3);
                     box-shadow: 0 8px 16px rgba(99, 102, 241, 0.1);
-                    transition: transform 0.3s ease;
-                    height: 100%;">
-            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🤖</div>
+                    transition: all 0.3s ease;
+                    height: 100%;
+                    cursor: pointer;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem; transition: transform 0.3s ease;">🤖</div>
             <h3 style="color: #a5b4fc; margin-bottom: 1rem; font-size: 1.3rem;">AI Detection</h3>
             <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
                 Machine learning finds complex anomalies traditional methods miss
             </p>
         </div>
+        <style>
+        div[style*="rgba(99, 102, 241"]:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 12px 28px rgba(99, 102, 241, 0.25) !important;
+            border-color: rgba(99, 102, 241, 0.6) !important;
+        }
+        div[style*="rgba(99, 102, 241"]:hover div {
+            transform: scale(1.1);
+        }
+        </style>
         ''', unsafe_allow_html=True)
     
     with col2:
@@ -308,14 +357,25 @@ def render_landing_page():
                     border-radius: 16px; 
                     border: 1px solid rgba(16, 185, 129, 0.3);
                     box-shadow: 0 8px 16px rgba(16, 185, 129, 0.1);
-                    transition: transform 0.3s ease;
-                    height: 100%;">
-            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🔒</div>
+                    transition: all 0.3s ease;
+                    height: 100%;
+                    cursor: pointer;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem; transition: transform 0.3s ease;">🔒</div>
             <h3 style="color: #6ee7b7; margin-bottom: 1rem; font-size: 1.3rem;">Privacy Shield</h3>
             <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
                 Enterprise PII detection with GDPR/CCPA compliance
             </p>
         </div>
+        <style>
+        div[style*="rgba(16, 185, 129"]:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.25) !important;
+            border-color: rgba(16, 185, 129, 0.6) !important;
+        }
+        div[style*="rgba(16, 185, 129"]:hover div {
+            transform: scale(1.1);
+        }
+        </style>
         ''', unsafe_allow_html=True)
     
     with col3:
@@ -325,14 +385,25 @@ def render_landing_page():
                     border-radius: 16px; 
                     border: 1px solid rgba(139, 92, 246, 0.3);
                     box-shadow: 0 8px 16px rgba(139, 92, 246, 0.1);
-                    transition: transform 0.3s ease;
-                    height: 100%;">
-            <div style="font-size: 3.5rem; margin-bottom: 1rem;">📐</div>
+                    transition: all 0.3s ease;
+                    height: 100%;
+                    cursor: pointer;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem; transition: transform 0.3s ease;">📐</div>
             <h3 style="color: #c4b5fd; margin-bottom: 1rem; font-size: 1.3rem;">Smart Transform</h3>
             <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
                 6 statistical transformations with auto-recommendations
             </p>
         </div>
+        <style>
+        div[style*="rgba(139, 92, 246"]:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 12px 28px rgba(139, 92, 246, 0.25) !important;
+            border-color: rgba(139, 92, 246, 0.6) !important;
+        }
+        div[style*="rgba(139, 92, 246"]:hover div {
+            transform: scale(1.1);
+        }
+        </style>
         ''', unsafe_allow_html=True)
     
     st.write("")
@@ -340,13 +411,21 @@ def render_landing_page():
     
     # New Features Highlight Banner with enhanced styling
     st.markdown('''
-    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); 
+    <style>
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2); }
+        50% { box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4); }
+    }
+    .new-features-banner {
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+    </style>
+    <div class="new-features-banner" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%); 
                 padding: 2rem; 
                 border-radius: 16px; 
                 border: 1px solid rgba(99, 102, 241, 0.4); 
                 text-align: center; 
-                margin-bottom: 2.5rem;
-                box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);">
+                margin-bottom: 2.5rem;">
         <div style="display: inline-block; 
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                     padding: 0.4rem 1rem; 
@@ -625,6 +704,16 @@ def render_landing_page():
     st.write("")
     st.write("")
     st.markdown('''
+    <style>
+    .stat-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.05);
+        filter: brightness(1.2);
+    }
+    </style>
     <div style="text-align: center; 
                 padding: 2.5rem; 
                 background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(30, 41, 59, 0.3) 100%); 
@@ -632,19 +721,19 @@ def render_landing_page():
                 border: 1px solid rgba(100, 116, 139, 0.4);
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);">
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem;">
-            <div style="padding: 1rem; border-radius: 12px; background: rgba(99, 102, 241, 0.1);">
+            <div class="stat-card" style="padding: 1rem; border-radius: 12px; background: rgba(99, 102, 241, 0.1);">
                 <h2 style="color: #818cf8; margin-bottom: 0.5rem; font-size: 2.5rem; font-weight: 700;">12</h2>
                 <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0;">Analysis Tabs</p>
             </div>
-            <div style="padding: 1rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1);">
+            <div class="stat-card" style="padding: 1rem; border-radius: 12px; background: rgba(16, 185, 129, 0.1);">
                 <h2 style="color: #6ee7b7; margin-bottom: 0.5rem; font-size: 2.5rem; font-weight: 700;">11</h2>
                 <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0;">Transform Methods</p>
             </div>
-            <div style="padding: 1rem; border-radius: 12px; background: rgba(251, 191, 36, 0.1);">
+            <div class="stat-card" style="padding: 1rem; border-radius: 12px; background: rgba(251, 191, 36, 0.1);">
                 <h2 style="color: #fbbf24; margin-bottom: 0.5rem; font-size: 2.5rem; font-weight: 700;">8+</h2>
                 <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0;">PII Types Detected</p>
             </div>
-            <div style="padding: 1rem; border-radius: 12px; background: rgba(139, 92, 246, 0.1);">
+            <div class="stat-card" style="padding: 1rem; border-radius: 12px; background: rgba(139, 92, 246, 0.1);">
                 <h2 style="color: #c4b5fd; margin-bottom: 0.5rem; font-size: 2.5rem; font-weight: 700;">100%</h2>
                 <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0;">Free & Open</p>
             </div>
