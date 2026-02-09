@@ -55,13 +55,50 @@ def render_deep_profile_tab(df):
     st.caption("Detailed statistical analysis, custom rule validation, and PII detection - No AI required.")
     
     # ========================================================
-    # PII DETECTION SECTION
+    # ✨ NEW FEATURE: DATA SOURCE SELECTOR
+    # ========================================================
+    data_sources = {"📄 Original Uploaded Data": df}
+    
+    # Check for cleaned data from Fix Data tab
+    if 'global_cleaned_df' in st.session_state and st.session_state.global_cleaned_df is not None:
+        data_sources["✅ Cleaned Data (from Fix Data tab)"] = st.session_state.global_cleaned_df
+    
+    # Check for skewness-corrected data
+    if 'skew_fixed_df' in st.session_state and st.session_state.skew_fixed_df is not None:
+        data_sources["📐 Skewness-Corrected Data"] = st.session_state.skew_fixed_df
+    
+    # Show selector if multiple data sources exist
+    if len(data_sources) > 1:
+        st.info("💡 **Pro Tip:** Choose your cleaned/transformed data to mask PII without losing your data processing work!", icon="✨")
+        
+        source_col, info_col = st.columns([2, 1])
+        
+        with source_col:
+            selected_source = st.selectbox(
+                "📊 Select Data Source for PII Scan & Masking",
+                options=list(data_sources.keys()),
+                index=1 if len(data_sources) > 1 else 0,  # Default to cleaned data
+                help="Choose the dataset version you want to scan and mask for PII"
+            )
+        
+        with info_col:
+            source_df = data_sources[selected_source]
+            st.metric("Rows", len(source_df), delta=f"{len(source_df) - len(df):+}" if len(source_df) != len(df) else None)
+            st.metric("Columns", len(source_df.columns), delta=f"{len(source_df.columns) - len(df.columns):+}" if len(source_df.columns) != len(df.columns) else None)
+        
+        working_df = source_df.copy()
+        st.markdown("---")
+    else:
+        working_df = df.copy()
+    
+    # ========================================================
+    # PII DETECTION SECTION (EVERYTHING BELOW IS ORIGINAL)
     # ========================================================
     st.markdown("### 🔐 PII (Personal Identifiable Information) Detection")
     
     with st.spinner("Scanning for PII..."):
         # Use the comprehensive PII detection from features module
-        pii_results = detect_pii_features(df)
+        pii_results = detect_pii_features(working_df)
         pii_findings = adapt_pii_results(pii_results)
     
     if pii_findings:
@@ -114,7 +151,7 @@ def render_deep_profile_tab(df):
                 'Column': col, 
                 'PII Type': pii_type, 
                 'Risk': '🔴 High' if pii_type in ['SSN', 'Credit Card'] else '🟡 Medium' if pii_type in ['Email', 'Phone', 'IP Address'] else '🟢 Low',
-                'Rows Affected': len(df)
+                'Rows Affected': len(working_df)
             }
             for col, pii_type in pii_findings.items()
         ])
@@ -129,7 +166,7 @@ def render_deep_profile_tab(df):
         with action_col1:
             # Mask PII button
             if st.button("🔒 Mask PII Data", type="primary", width="stretch", help="Replace PII with masked values"):
-                masked_df = df.copy()
+                masked_df = working_df.copy()
                 mask_count = 0
                 
                 for col, pii_type in pii_findings.items():
@@ -229,14 +266,24 @@ def render_deep_profile_tab(df):
                 # Store masked dataframe
                 st.session_state['masked_df'] = masked_df
                 st.success(f"✅ Masked {mask_count} PII column(s)! Download below.")
+                
+                # ✨ NEW: Show which data source was used (ONLY NEW LINE HERE)
+                if len(data_sources) > 1:
+                    st.info(f"📊 Based on: **{selected_source}**")
+                
                 st.rerun()
         
         with action_col2:
             # Remove PII button
             if st.button("🗑️ Remove PII Columns", width="stretch", help="Drop all PII columns from dataset"):
-                clean_df = df.drop(columns=list(pii_findings.keys()))
+                clean_df = working_df.drop(columns=list(pii_findings.keys()))
                 st.session_state['clean_df'] = clean_df
                 st.success(f"✅ Removed {len(pii_findings)} PII column(s)! Download below.")
+                
+                # ✨ NEW: Show which data source was used (ONLY NEW LINE HERE)
+                if len(data_sources) > 1:
+                    st.info(f"📊 Based on: **{selected_source}**")
+                
                 st.rerun()
         
         with action_col3:
