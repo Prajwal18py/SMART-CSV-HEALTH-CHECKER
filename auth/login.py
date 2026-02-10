@@ -1,26 +1,3 @@
-"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║                 🔥 ULTIMATE LOGIN PAGE - PROFESSIONAL GRADE 🔥               ║
-║                                                                              ║
-║  Features:                                                                   ║
-║  ✅ Animated gradient mesh background                                        ║
-║  ✅ Advanced glassmorphism with backdrop blur                                ║
-║  ✅ Neon glow effects and animations                                         ║
-║  ✅ Floating orbs with dynamic shadows                                       ║
-║  ✅ Premium typography with gradient text                                    ║
-║  ✅ Smooth micro-interactions                                                ║
-║  ✅ Modern card design with hover effects                                    ║
-║  ✅ Professional color scheme                                                ║
-║  ✅ Mobile responsive design                                                 ║
-║  ✅ Enhanced accessibility                                                   ║
-║                                                                              ║
-║  Version: 4.0 ENHANCED UI                                                    ║
-║  Last Updated: January 2026                                                  ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-"""
-
 import streamlit as st
 from auth.auth_functions import sign_in, sign_up, reset_password, sign_out
 import time
@@ -35,24 +12,21 @@ st.set_page_config(
 )
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║                              CSS STYLES                                      ║
+# ║                              CSS STYLES - ENHANCED                           ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 def get_login_css():
     """
-    Returns the complete CSS styling for the login page.
-    This includes:
-    - Font imports
-    - Background animations
-    - Particle effects
-    - Input field styling
-    - Button styling
-    - Tab styling
-    - Form containers
-    - Responsive design
+    Returns the complete CSS styling for the login page with UI enhancements.
     
-    NOTE: This function returns a string that must be rendered with:
-    st.markdown(get_login_css(), unsafe_allow_html=True)
+    NEW ENHANCEMENTS:
+    - Input focus glow with scale effect
+    - Button hover lift with enhanced shadow
+    - Brain pulse animation
+    - Enhanced glassmorphism
+    - Error shake animation
+    - Password strength indicator
+    - Micro-interactions
     """
     return """
     <style>
@@ -77,7 +51,7 @@ def get_login_css():
         overflow-x: hidden;
     }
     
-    /* Animated gradient mesh background */
+    /* ✨ ENHANCED: Animated gradient mesh background with smooth movement */
     .stApp::before {
         content: '';
         position: fixed;
@@ -93,11 +67,18 @@ def get_login_css():
             linear-gradient(135deg, #0a0118 0%, #1a0b2e 50%, #160b28 100%);
         z-index: -2;
         animation: meshMove 20s ease-in-out infinite;
+        background-size: 400% 400%;
     }
     
     @keyframes meshMove {
-        0%, 100% { transform: scale(1) rotate(0deg); }
-        50% { transform: scale(1.1) rotate(2deg); }
+        0%, 100% { 
+            transform: scale(1) rotate(0deg); 
+            background-position: 0% 50%;
+        }
+        50% { 
+            transform: scale(1.1) rotate(2deg); 
+            background-position: 100% 50%;
+        }
     }
     
     /* Hide default Streamlit form elements */
@@ -107,7 +88,7 @@ def get_login_css():
     }
     
     /* ═══════════════════════════════════════════════════════════════════════ */
-    /* FORM CONTAINER - ADVANCED GLASSMORPHISM */
+    /* ✨ ENHANCED: FORM CONTAINER - ADVANCED GLASSMORPHISM */
     /* ═══════════════════════════════════════════════════════════════════════ */
     .form-container {
         background: rgba(255, 255, 255, 0.03);
@@ -119,12 +100,14 @@ def get_login_css():
         margin: 20px 0;
         box-shadow: 
             0 8px 32px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            0 0 0 1px rgba(168, 85, 247, 0.1);
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
     }
     
+    /* Shimmer effect on hover */
     .form-container::before {
         content: '';
         position: absolute;
@@ -140,10 +123,12 @@ def get_login_css():
         left: 100%;
     }
     
+    /* ✨ ENHANCED: Lift and glow on hover */
     .form-container:hover {
         box-shadow: 
             0 12px 48px rgba(99, 102, 241, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 80px rgba(168, 85, 247, 0.2);
         border: 1px solid rgba(99, 102, 241, 0.2);
         transform: translateY(-2px);
     }
@@ -158,22 +143,23 @@ def get_login_css():
         position: relative;
     }
     
+    /* ✨ ENHANCED: Brain pulse animation */
     .brain-icon {
         font-size: 80px;
-        animation: float 3s ease-in-out infinite;
+        animation: brainPulse 2s ease-in-out infinite;
         display: inline-block;
         filter: drop-shadow(0 0 30px rgba(168, 85, 247, 0.6));
         position: relative;
     }
     
-    @keyframes float {
+    @keyframes brainPulse {
         0%, 100% { 
             transform: translateY(0px) scale(1); 
-            filter: drop-shadow(0 0 30px rgba(168, 85, 247, 0.6));
+            filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.5));
         }
         50% { 
             transform: translateY(-10px) scale(1.05); 
-            filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.8));
+            filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.8)) drop-shadow(0 0 80px rgba(236, 72, 153, 0.4));
         }
     }
     
@@ -199,15 +185,17 @@ def get_login_css():
     }
     
     .tagline {
-        color: rgba(203, 213, 224, 0.9);
+        color: rgba(203, 213, 224, 0.7);
         font-size: 20px;
         font-weight: 400;
         margin-bottom: 25px;
         letter-spacing: 1px;
         text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
         font-family: 'Inter', sans-serif;
+        opacity: 0.9;
     }
     
+    /* ✨ ENHANCED: Feature badge with ripple effect */
     .feature-badge {
         display: inline-flex;
         align-items: center;
@@ -229,6 +217,7 @@ def get_login_css():
         overflow: hidden;
     }
     
+    /* Ripple effect */
     .feature-badge::before {
         content: '';
         position: absolute;
@@ -285,8 +274,8 @@ def get_login_css():
         line-height: 1.6;
     }
     
-        /* ═══════════════════════════════════════════════════════════════════════ */
-    /* INPUT FIELD STYLES - FIXED FOR ALL BROWSER THEMES */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* ✨ ENHANCED: INPUT FIELD STYLES WITH GLOW EFFECT */
     /* ═══════════════════════════════════════════════════════════════════════ */
 
     /* Target ALL Streamlit input containers */
@@ -304,7 +293,7 @@ def get_login_css():
         caret-color: #ffffff !important;
     }
 
-    /* Main input styling */
+    /* ✨ ENHANCED: Main input styling with smooth transitions */
     .stTextInput > div > div > input,
     [data-testid="stTextInput"] input,
     [data-baseweb="input"] input {
@@ -335,18 +324,19 @@ def get_login_css():
         border-color: rgba(255, 255, 255, 0.15) !important;
     }
 
-    /* Focus state */
+    /* ✨ ENHANCED: Focus state with glow and scale */
     .stTextInput > div > div > input:focus,
     [data-testid="stTextInput"] input:focus,
     [data-baseweb="input"]:focus-within {
         background: #1f1f3a !important;
         background-color: #1f1f3a !important;
-        border: 1.5px solid rgba(168, 85, 247, 0.5) !important;
+        border: 1.5px solid rgba(168, 85, 247, 0.6) !important;
         box-shadow: 
             0 0 0 4px rgba(168, 85, 247, 0.15),
             inset 0 2px 4px rgba(0, 0, 0, 0.2),
-            0 0 20px rgba(168, 85, 247, 0.2) !important;
+            0 0 30px rgba(168, 85, 247, 0.3) !important;
         outline: none !important;
+        transform: scale(1.01);
     }
 
     /* Placeholder text */
@@ -358,7 +348,7 @@ def get_login_css():
         opacity: 1 !important;
     }
 
-    /* Labels */
+    /* ✨ ENHANCED: Labels with icon support */
     .stTextInput > label,
     [data-testid="stTextInput"] label {
         color: rgba(203, 213, 224, 0.95) !important;
@@ -369,6 +359,7 @@ def get_login_css():
         display: flex !important;
         align-items: center !important;
         gap: 6px !important;
+        transition: color 0.2s ease;
     }
 
     /* Password field eye icon container */
@@ -379,12 +370,20 @@ def get_login_css():
         border-radius: 14px !important;
     }
 
-    /* Password toggle button (eye icon) */
+    /* ✨ ENHANCED: Password toggle button (eye icon) with hover */
     button[kind="icon"],
     [data-testid="stTextInput"] button,
     .stTextInput button {
         background: transparent !important;
         color: rgba(255, 255, 255, 0.6) !important;
+        transition: all 0.2s ease !important;
+    }
+
+    button[kind="icon"]:hover,
+    [data-testid="stTextInput"] button:hover,
+    .stTextInput button:hover {
+        color: #a78bfa !important;
+        transform: scale(1.1);
     }
 
     /* Force ALL input elements */
@@ -416,7 +415,7 @@ def get_login_css():
     }
 
     /* ═══════════════════════════════════════════════════════════════════════ */
-    /* BUTTON STYLES - FIXED FOR ALL BROWSER THEMES */
+    /* ✨ ENHANCED: BUTTON STYLES WITH LIFT EFFECT */
     /* ═══════════════════════════════════════════════════════════════════════ */
     .stButton > button,
     [data-testid="stFormSubmitButton"] > button,
@@ -445,12 +444,48 @@ def get_login_css():
         animation: buttonGradient 3s ease infinite;
     }
 
+    @keyframes buttonGradient {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+
+    /* Ripple effect on click */
+    .stButton > button::before,
+    [data-testid="stFormSubmitButton"] > button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    /* ✨ ENHANCED: Hover state with lift */
     .stButton > button:hover,
     [data-testid="stFormSubmitButton"] > button:hover {
         transform: translateY(-3px);
         box-shadow: 
             0 8px 30px rgba(168, 85, 247, 0.6),
             inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .stButton > button:hover::before,
+    [data-testid="stFormSubmitButton"] > button:hover::before {
+        width: 400px;
+        height: 400px;
+    }
+
+    /* Active/pressed state */
+    .stButton > button:active,
+    [data-testid="stFormSubmitButton"] > button:active {
+        transform: translateY(0px);
+        box-shadow: 
+            0 4px 15px rgba(168, 85, 247, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
     }
 
     /* Form submit button specific */
@@ -469,70 +504,7 @@ def get_login_css():
     }
     
     /* ═══════════════════════════════════════════════════════════════════════ */
-    /* BUTTON STYLES */
-    /* ═══════════════════════════════════════════════════════════════════════ */
-    .stButton > button {
-        width: 100%;
-        background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #8b5cf6 100%);
-        background-size: 200% 200%;
-        color: white;
-        border: none;
-        border-radius: 14px;
-        padding: 18px 28px;
-        font-size: 16px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 
-            0 4px 20px rgba(168, 85, 247, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        text-transform: uppercase;
-        font-family: 'Space Grotesk', sans-serif;
-        position: relative;
-        overflow: hidden;
-        animation: buttonGradient 3s ease infinite;
-    }
-    
-    @keyframes buttonGradient {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-    }
-    
-    .stButton > button::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-    
-    .stButton > button:hover::before {
-        width: 400px;
-        height: 400px;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 
-            0 8px 30px rgba(168, 85, 247, 0.6),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-    
-    .stButton > button:active {
-        transform: translateY(-1px);
-        box-shadow: 
-            0 4px 15px rgba(168, 85, 247, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-    
-    /* ═══════════════════════════════════════════════════════════════════════ */
-    /* TAB STYLES */
+    /* ✨ ENHANCED: TAB STYLES WITH SMOOTH TRANSITIONS */
     /* ═══════════════════════════════════════════════════════════════════════ */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
@@ -554,13 +526,16 @@ def get_login_css():
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         letter-spacing: 0.3px;
         font-family: 'Inter', sans-serif;
+        position: relative;
     }
     
+    /* Tab hover preview */
     .stTabs [data-baseweb="tab"]:hover {
         background: rgba(255, 255, 255, 0.05);
         color: rgba(203, 213, 224, 0.95);
     }
     
+    /* ✨ ENHANCED: Active tab with glow */
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(99, 102, 241, 0.3) 100%);
         color: white !important;
@@ -772,7 +747,7 @@ def get_login_css():
     }
     
     /* ═══════════════════════════════════════════════════════════════════════ */
-    /* ALERT/MESSAGE STYLES */
+    /* ✨ ENHANCED: ALERT/MESSAGE STYLES WITH SHAKE ANIMATION */
     /* ═══════════════════════════════════════════════════════════════════════ */
     .stAlert {
         background: rgba(255, 255, 255, 0.04) !important;
@@ -781,6 +756,184 @@ def get_login_css():
         border-radius: 14px !important;
         color: #ffffff !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Error alert shake animation */
+    [data-testid="stAlert"][data-kind="error"] {
+        animation: shake 0.5s;
+        background: rgba(239, 68, 68, 0.1) !important;
+        border-left: 3px solid #ef4444 !important;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+
+    /* Success alert */
+    [data-testid="stAlert"][data-kind="success"] {
+        background: rgba(16, 185, 129, 0.1) !important;
+        border-left: 3px solid #10b981 !important;
+    }
+    
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* ✨ NEW: PASSWORD STRENGTH INDICATOR */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    .password-strength {
+        margin-top: 8px;
+        padding: 12px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .strength-bar {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .strength-fill {
+        height: 100%;
+        transition: width 0.3s ease, background-color 0.3s ease;
+        border-radius: 3px;
+    }
+
+    .strength-text {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .strength-weak { color: #ef4444; }
+    .strength-fair { color: #f59e0b; }
+    .strength-good { color: #10b981; }
+    .strength-strong { color: #06b6d4; }
+
+    .strength-fill-weak { background: linear-gradient(90deg, #ef4444, #dc2626); width: 25%; }
+    .strength-fill-fair { background: linear-gradient(90deg, #f59e0b, #d97706); width: 50%; }
+    .strength-fill-good { background: linear-gradient(90deg, #10b981, #059669); width: 75%; }
+    .strength-fill-strong { background: linear-gradient(90deg, #06b6d4, #0891b2); width: 100%; }
+    
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    /* ✨ NEW: LOADING SPINNER ANIMATION */
+    /* ═══════════════════════════════════════════════════════════════════════ */
+    
+    /* Override default Streamlit spinner */
+    .stSpinner > div {
+        border: 4px solid rgba(168, 85, 247, 0.1) !important;
+        border-top: 4px solid #a855f7 !important;
+        border-radius: 50% !important;
+        width: 48px !important;
+        height: 48px !important;
+        animation: spin 1s linear infinite !important;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Custom loading container */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+        background: rgba(168, 85, 247, 0.05);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        margin: 20px 0;
+    }
+    
+    /* Animated spinner */
+    .custom-spinner {
+        width: 56px;
+        height: 56px;
+        border: 5px solid rgba(168, 85, 247, 0.1);
+        border-top: 5px solid #a855f7;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+    }
+    
+    /* Pulsing dots */
+    .loading-dots {
+        display: flex;
+        gap: 8px;
+        margin-top: 15px;
+    }
+    
+    .loading-dot {
+        width: 10px;
+        height: 10px;
+        background: linear-gradient(135deg, #a855f7, #6366f1);
+        border-radius: 50%;
+        animation: dotPulse 1.4s ease-in-out infinite;
+        box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+    }
+    
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes dotPulse {
+        0%, 100% { 
+            transform: scale(0.8);
+            opacity: 0.5;
+        }
+        50% { 
+            transform: scale(1.2);
+            opacity: 1;
+        }
+    }
+    
+    /* Loading text */
+    .loading-text {
+        color: #a5b4fc;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        font-family: 'Space Grotesk', sans-serif;
+        animation: textPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes textPulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+    
+    /* Shimmer effect for loading state */
+    .loading-shimmer {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .loading-shimmer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba(255, 255, 255, 0.1), 
+            transparent
+        );
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        100% { left: 100%; }
     }
     
     /* ═══════════════════════════════════════════════════════════════════════ */
@@ -934,11 +1087,6 @@ def show_login_page():
     6. Footer with security badge
     """
     # ═══════════════════════════════════════════════════════════════════════
-    # CLEAR ANY PREVIOUS OUTPUTS
-    # ═══════════════════════════════════════════════════════════════════════
-    # This prevents HTML from showing as text
-    
-    # ═══════════════════════════════════════════════════════════════════════
     # INJECT CSS STYLES
     # ═══════════════════════════════════════════════════════════════════════
     st.markdown(get_login_css(), unsafe_allow_html=True)
@@ -967,6 +1115,46 @@ def show_login_page():
         # HEADER SECTION
         # ═══════════════════════════════════════════════════════════════════
         st.markdown(get_header_html(), unsafe_allow_html=True)
+        
+        # ═══════════════════════════════════════════════════════════════════
+        # APP FEATURES - QUICK HIGHLIGHTS
+        # ═══════════════════════════════════════════════════════════════════
+        st.markdown("""
+        <div style="
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        ">
+            <div style="padding: 12px;">
+                <div style="font-size: 2.5rem; margin-bottom: 8px;">🤖</div>
+                <p style="color: #a5b4fc; font-weight: 600; font-size: 0.95rem; margin: 0;">Intelligent Detection</p>
+                <p style="color: rgba(203, 213, 224, 0.7); font-size: 0.8rem; margin-top: 4px;">ML anomaly detection</p>
+            </div>
+            <div style="padding: 12px;">
+                <div style="font-size: 2.5rem; margin-bottom: 8px;">🛠️</div>
+                <p style="color: #6ee7b7; font-weight: 600; font-size: 0.95rem; margin: 0;">Complete Data Pipeline</p>
+                <p style="color: rgba(203, 213, 224, 0.7); font-size: 0.8rem; margin-top: 4px;">Clean, transform & export</p>
+            </div>
+            <div style="padding: 12px;">
+                <div style="font-size: 2.5rem; margin-bottom: 8px;">🔒</div>
+                <p style="color: #c4b5fd; font-weight: 600; font-size: 0.95rem; margin: 0;">Enterprise Privacy</p>
+                <p style="color: rgba(203, 213, 224, 0.7); font-size: 0.8rem; margin-top: 4px;">PII detection & masking</p>
+            </div>
+        </div>
+        <div style="text-align: center; margin-bottom: 30px;">
+            <p style="
+                color: #fbbf24;
+                font-weight: 600;
+                font-size: 0.9rem;
+                margin: 0;
+                letter-spacing: 0.5px;
+            ">
+                ⭐ 100% Free & Open Source
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # ═══════════════════════════════════════════════════════════════════
         # AUTHENTICATION TABS
@@ -999,6 +1187,38 @@ def show_login_page():
         # FOOTER SECTION
         # ═══════════════════════════════════════════════════════════════════
         st.markdown(get_footer_html(), unsafe_allow_html=True)
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                      ✨ CUSTOM LOADING COMPONENT                            ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+def show_loading(message="Loading..."):
+    """
+    Display a beautiful custom loading animation.
+    
+    Args:
+        message: Loading message to display
+        
+    Usage:
+        container = show_loading("Signing you in...")
+        # Do your processing
+        container.empty()  # Remove loading
+    """
+    container = st.empty()
+    
+    container.markdown(f"""
+    <div class="loading-container loading-shimmer">
+        <div class="custom-spinner"></div>
+        <div class="loading-text">{message}</div>
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    return container
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                              LOGIN FORM                                      ║
@@ -1042,8 +1262,7 @@ def render_login_form():
         
         # Submit button
         submit_button = st.form_submit_button(
-            "🚀 Sign In",
-            use_container_width=True
+            "🚀 Sign In"
         )
         
         # Handle form submission
@@ -1054,7 +1273,7 @@ def render_login_form():
 
 def handle_login(email: str, password: str):
     """
-    Handles the login form submission.
+    Handles the login form submission with beautiful loading animation.
     
     Args:
         email: User's email address
@@ -1073,17 +1292,47 @@ def handle_login(email: str, password: str):
         st.error("⚠️ Please enter a valid email address")
         return
     
+    # ✨ ENHANCED: Custom loading with animated messages
+    loading = show_loading("🔍 Verifying credentials...")
+    time.sleep(0.5)
+    
+    loading.markdown("""
+    <div class="loading-container loading-shimmer">
+        <div class="custom-spinner"></div>
+        <div class="loading-text">✨ Loading your workspace...</div>
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Attempt login
-    with st.spinner("🔄 Signing you in..."):
-        result = sign_in(email, password)
+    result = sign_in(email, password)
+    
+    if result["success"]:
+        loading.markdown("""
+        <div class="loading-container loading-shimmer">
+            <div class="custom-spinner"></div>
+            <div class="loading-text">🚀 Almost there...</div>
+            <div class="loading-dots">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        time.sleep(0.3)
         
-        if result["success"]:
-            st.success("✅ Welcome back! Redirecting...")
-            time.sleep(0.5)
-            st.rerun()
-        else:
-            error_message = result.get('error', 'Login failed. Please check your credentials.')
-            st.error(f"❌ {error_message}")
+        loading.empty()
+        st.success("✅ Welcome back! Redirecting...")
+        time.sleep(0.5)
+        st.rerun()
+    else:
+        loading.empty()
+        error_message = result.get('error', 'Login failed. Please check your credentials.')
+        st.error(f"❌ {error_message}")
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                             SIGNUP FORM                                      ║
@@ -1130,6 +1379,20 @@ def render_signup_form():
             help="Use at least 6 characters with a mix of letters and numbers"
         )
         
+        # ✨ NEW: Password strength indicator
+        if password:
+            strength, strength_class, strength_fill_class = calculate_password_strength(password)
+            st.markdown(f"""
+            <div class="password-strength">
+                <div class="strength-bar">
+                    <div class="strength-fill {strength_fill_class}"></div>
+                </div>
+                <div class="strength-text {strength_class}">
+                    {strength}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
         # Confirm password input
         password_confirm = st.text_input(
             "🔒 Confirm Password",
@@ -1144,8 +1407,7 @@ def render_signup_form():
         
         # Submit button
         submit_button = st.form_submit_button(
-            "✨ Create Account",
-            use_container_width=True
+            "✨ Create Account"
         )
         
         # Handle form submission
@@ -1189,13 +1451,17 @@ def handle_signup(full_name: str, email: str, password: str, password_confirm: s
         st.error("⚠️ Passwords don't match. Please try again.")
         return
     
-    # Attempt signup
-    with st.spinner("🔄 Creating your account..."):
-        result = sign_up(email, password, full_name)
-        
-        if result["success"]:
-            st.success("✅ Account created successfully!")
-            st.markdown("""
+    # ✨ ENHANCED: Custom loading animation
+    loading = show_loading("🔄 Creating your account...")
+    time.sleep(0.5)
+    
+    result = sign_up(email, password, full_name)
+    
+    loading.empty()
+    
+    if result["success"]:
+        st.success("✅ Account created successfully!")
+        st.markdown("""
             <div style="
                 background: rgba(99, 102, 241, 0.1);
                 border: 1px solid rgba(99, 102, 241, 0.3);
@@ -1222,9 +1488,9 @@ def handle_signup(full_name: str, email: str, password: str, password_confirm: s
                 </div>
             </div>
             """, unsafe_allow_html=True)
-        else:
-            error_message = result.get('error', 'Signup failed. Please try again.')
-            st.error(f"❌ {error_message}")
+    else:
+        error_message = result.get('error', 'Signup failed. Please try again.')
+        st.error(f"❌ {error_message}")
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                        RESET PASSWORD FORM                                   ║
@@ -1259,8 +1525,7 @@ def render_reset_form():
         
         # Submit button
         submit_button = st.form_submit_button(
-            "📧 Send Reset Link",
-            use_container_width=True
+            "📧 Send Reset Link"
         )
         
         # Handle form submission
@@ -1285,13 +1550,17 @@ def handle_reset(email: str):
         st.error("⚠️ Please enter a valid email address")
         return
     
-    # Attempt password reset
-    with st.spinner("🔄 Sending reset link..."):
-        result = reset_password(email)
-        
-        if result["success"]:
-            st.success("✅ Password reset link sent!")
-            st.markdown("""
+    # ✨ ENHANCED: Custom loading animation
+    loading = show_loading("🔄 Sending reset link...")
+    time.sleep(0.5)
+    
+    result = reset_password(email)
+    
+    loading.empty()
+    
+    if result["success"]:
+        st.success("✅ Password reset link sent!")
+        st.markdown("""
             <div style="
                 background: rgba(99, 102, 241, 0.1);
                 border: 1px solid rgba(99, 102, 241, 0.3);
@@ -1318,9 +1587,9 @@ def handle_reset(email: str):
                 </div>
             </div>
             """, unsafe_allow_html=True)
-        else:
-            error_message = result.get('error', 'Failed to send reset link. Please try again.')
-            st.error(f"❌ {error_message}")
+    else:
+        error_message = result.get('error', 'Failed to send reset link. Please try again.')
+        st.error(f"❌ {error_message}")
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                          UTILITY FUNCTIONS                                   ║
@@ -1340,6 +1609,44 @@ def is_valid_email(email: str) -> bool:
         True if email format is valid, False otherwise
     """
     return bool(EMAIL_PATTERN.match(email))
+
+def calculate_password_strength(password: str) -> tuple:
+    """
+    ✨ NEW: Calculate password strength and return appropriate classes.
+    
+    Args:
+        password: Password to evaluate
+        
+    Returns:
+        Tuple of (strength_text, strength_class, fill_class)
+    """
+    score = 0
+    
+    # Length check
+    if len(password) >= 6:
+        score += 1
+    if len(password) >= 10:
+        score += 1
+    
+    # Character variety
+    if re.search(r'[a-z]', password):
+        score += 1
+    if re.search(r'[A-Z]', password):
+        score += 1
+    if re.search(r'[0-9]', password):
+        score += 1
+    if re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        score += 1
+    
+    # Determine strength
+    if score <= 2:
+        return ("🔴 Weak", "strength-weak", "strength-fill-weak")
+    elif score <= 3:
+        return ("🟡 Fair", "strength-fair", "strength-fill-fair")
+    elif score <= 4:
+        return ("🟢 Good", "strength-good", "strength-fill-good")
+    else:
+        return ("🟢 Strong", "strength-strong", "strength-fill-strong")
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                        SIDEBAR USER INFO                                     ║
@@ -1374,7 +1681,7 @@ def show_user_info_sidebar():
     """, unsafe_allow_html=True)
     
     # Logout button
-    if st.sidebar.button("🚪 Sign Out", use_container_width=True, key="logout_btn"):
+    if st.sidebar.button("🚪 Sign Out", key="logout_btn"):
         handle_logout()
 
 def get_user_initials(name: str) -> str:
