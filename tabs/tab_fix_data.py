@@ -82,7 +82,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             cols_missing = [c for c in df.columns if df[c].isna().sum() > 0]
             
             if not cols_missing:
-                st.balloons()
+                st.toast("✅ Data is already complete!", icon="✨")
                 st.success("✅ Data is already complete! No imputation needed.")
             else:
                 # MODERN LOADING UI
