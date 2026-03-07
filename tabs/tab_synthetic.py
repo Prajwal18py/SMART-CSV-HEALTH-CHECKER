@@ -1,11 +1,14 @@
 """
 Tab 10: Synthetic Data Generator
 Generate synthetic data that mimics the statistical properties of the original dataset
+NOW WITH: Enhanced UI matching EDA tab design
 """
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+
+from utils.export_utils import smart_download_button, get_format_label
 
 try:
     from scipy import stats
@@ -13,15 +16,97 @@ try:
 except ImportError:
     SCIPY_AVAILABLE = False
 
+# ══════════════════════════════════════════════════════════════════════
+# ENHANCED CSS - MATCHING EDA TAB
+# ══════════════════════════════════════════════════════════════════════
+SYNTHETIC_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap');
+
+/* Section headers */
+.eda-section-head {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin: 1.6rem 0 1rem 0;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid rgba(99,102,241,.2);
+}
+.eda-section-head .icon { font-size:1.3rem; }
+.eda-section-head .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #c7d2fe;
+    margin: 0;
+}
+
+/* Config cards */
+.config-card {
+    background: linear-gradient(135deg, rgba(30,41,59,.9), rgba(15,23,42,.9));
+    border: 1px solid rgba(99,102,241,.25);
+    border-radius: 14px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+.config-card:hover {
+    border-color: rgba(99,102,241,.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(99,102,241,.12);
+}
+
+/* Buttons */
+.stButton > button {
+    transition: all 0.3s ease !important;
+    border-radius: 12px !important;
+}
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(99,102,241, 0.3) !important;
+}
+
+.stDownloadButton > button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.stDownloadButton > button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Expanders */
+.streamlit-expanderHeader {
+    transition: all 0.3s ease !important;
+    border-radius: 8px !important;
+}
+.streamlit-expanderHeader:hover {
+    background: rgba(99, 102, 241, 0.05) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+}
+</style>
+"""
+
 
 def render_synthetic_tab(df, col_types):
-    """Render the Synthetic Data Generator tab"""
+    """Render the Synthetic Data Generator tab with enhanced UI"""
+    
+    # Apply enhanced CSS
+    st.markdown(SYNTHETIC_CSS, unsafe_allow_html=True)
     
     st.markdown('<h2 class="gradient-header">🧬 Synthetic Data Generator</h2>', unsafe_allow_html=True)
     st.caption("Generate realistic synthetic data that preserves statistical properties of your original dataset.")
     
-    # Configuration Section
-    with st.expander("⚙️ Generation Settings", expanded=True):
+    # ========================================================
+    # CONFIGURATION SECTION WITH ENHANCED UI
+    # ========================================================
+    st.markdown("""
+    <div class="eda-section-head">
+        <span class="icon">⚙️</span>
+        <p class="title">Generation Settings</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    with st.expander("Configure Generation Parameters", expanded=True):
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -48,8 +133,15 @@ def render_synthetic_tab(df, col_types):
                 help="Add randomness to prevent exact replication"
             )
     
-    # Column Selection
-    st.markdown("### 📋 Select Columns to Generate")
+    # ========================================================
+    # COLUMN SELECTION WITH ENHANCED UI
+    # ========================================================
+    st.markdown("""
+    <div class="eda-section-head">
+        <span class="icon">📋</span>
+        <p class="title">Select Columns to Generate</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     col_options = list(df.columns)
     selected_cols = st.multiselect(
@@ -63,10 +155,9 @@ def render_synthetic_tab(df, col_types):
         st.warning("⚠️ Please select at least one column")
         return
     
-    # Generate Button
     st.markdown("---")
     
-    if st.button("🚀 Generate Synthetic Data", type="primary", use_container_width=True):
+    if st.button("🚀 Generate Synthetic Data", type="primary"):
         with st.spinner("🧬 Generating synthetic data..."):
             progress = st.progress(0, text="Initializing...")
             
@@ -82,57 +173,78 @@ def render_synthetic_tab(df, col_types):
                 
                 progress.progress(1.0, text="✅ Complete!")
                 
+                st.session_state['synthetic_df'] = synthetic_df
+                st.session_state['synthetic_original_cols'] = selected_cols
                 st.success(f"✅ Generated {len(synthetic_df):,} synthetic rows!")
                 
-                # Show comparison
-                st.markdown("### 📊 Original vs Synthetic Comparison")
-                
-                tab_preview, tab_stats, tab_viz = st.tabs(["Preview", "Statistics", "Visualizations"])
-                
-                with tab_preview:
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown("**Original Data (Sample)**")
-                        st.dataframe(df[selected_cols].head(10), height=300)
-                    with col2:
-                        st.markdown("**Synthetic Data (Sample)**")
-                        st.dataframe(synthetic_df.head(10), height=300)
-                
-                with tab_stats:
-                    render_stats_comparison(df[selected_cols], synthetic_df)
-                
-                with tab_viz:
-                    render_distribution_comparison(df[selected_cols], synthetic_df)
-                
-                # Download Section
-                st.markdown("---")
-                st.markdown("### 📥 Download Synthetic Data")
-                
-                col_dl1, col_dl2 = st.columns(2)
-                
-                with col_dl1:
-                    st.download_button(
-                        "⬇️ Download Synthetic CSV",
-                        synthetic_df.to_csv(index=False).encode('utf-8'),
-                        f"synthetic_data_{n_samples}rows.csv",
-                        "text/csv",
-                        use_container_width=True
-                    )
-                
-                with col_dl2:
-                    combined_df = pd.concat([df[selected_cols], synthetic_df], ignore_index=True)
-                    combined_df['_is_synthetic'] = [False] * len(df) + [True] * len(synthetic_df)
-                    
-                    st.download_button(
-                        "⬇️ Download Combined (Original + Synthetic)",
-                        combined_df.to_csv(index=False).encode('utf-8'),
-                        f"combined_data_{len(combined_df)}rows.csv",
-                        "text/csv",
-                        use_container_width=True
-                    )
-            
             except Exception as e:
                 st.error(f"❌ Error generating synthetic data: {str(e)}")
+    
+    # ========================================================
+    # RESULTS SECTION WITH ENHANCED UI
+    # ========================================================
+    if 'synthetic_df' in st.session_state:
+        synthetic_df = st.session_state['synthetic_df']
+        original_cols = st.session_state.get('synthetic_original_cols', selected_cols)
+        
+        display_original_cols = [c for c in original_cols if c in df.columns]
+        
+        st.markdown("""
+        <div class="eda-section-head">
+            <span class="icon">📊</span>
+            <p class="title">Original vs Synthetic Comparison</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        tab_preview, tab_stats, tab_viz = st.tabs(["Preview", "Statistics", "Visualizations"])
+        
+        with tab_preview:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("**Original Data (Sample)**")
+                st.dataframe(df[display_original_cols].head(10), height=300)
+            with col2:
+                st.markdown("**Synthetic Data (Sample)**")
+                st.dataframe(synthetic_df.head(10), height=300)
+        
+        with tab_stats:
+            render_stats_comparison(df[display_original_cols], synthetic_df)
+        
+        with tab_viz:
+            render_distribution_comparison(df[display_original_cols], synthetic_df)
+        
+        st.markdown("---")
+        st.markdown("""
+        <div class="eda-section-head">
+            <span class="icon">📥</span>
+            <p class="title">Download Synthetic Data</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        fmt = get_format_label()
+        
+        col_dl1, col_dl2 = st.columns(2)
+        
+        with col_dl1:
+            smart_download_button(
+                df=synthetic_df,
+                label=f"⬇️ Download Synthetic ({fmt})",
+                suffix=f"synthetic_{n_samples}rows",
+                key="dl_synthetic_only",
+                button_width=None
+            )
+        
+        with col_dl2:
+            combined_df = pd.concat([df[display_original_cols], synthetic_df], ignore_index=True)
+            combined_df['_is_synthetic'] = [False] * len(df) + [True] * len(synthetic_df)
+            
+            smart_download_button(
+                df=combined_df,
+                label=f"⬇️ Download Combined ({fmt})",
+                suffix=f"combined_{len(combined_df)}rows",
+                key="dl_synthetic_combined",
+                button_width=None
+            )
 
 
 def generate_synthetic_data(df, n_samples, preserve_corr, noise_level, col_types, progress):
@@ -141,7 +253,6 @@ def generate_synthetic_data(df, n_samples, preserve_corr, noise_level, col_types
     synthetic_data = {}
     numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
     
-    # If preserving correlations and we have multiple numeric columns
     if preserve_corr and len(numeric_cols) > 1:
         progress.progress(0.1, text="Computing correlation structure...")
         
@@ -151,19 +262,15 @@ def generate_synthetic_data(df, n_samples, preserve_corr, noise_level, col_types
             try:
                 corr_matrix = numeric_df.corr().values
                 
-                # Make positive semi-definite
                 eigenvalues, eigenvectors = np.linalg.eigh(corr_matrix)
                 eigenvalues = np.maximum(eigenvalues, 1e-8)
                 corr_matrix = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T
                 
-                # Cholesky decomposition
                 L = np.linalg.cholesky(corr_matrix)
                 
-                # Generate correlated samples
                 uncorrelated = np.random.standard_normal((n_samples, len(numeric_cols)))
                 correlated = uncorrelated @ L.T
                 
-                # Transform to match original distributions
                 for i, col in enumerate(numeric_cols):
                     original = numeric_df[col].values
                     mean, std = original.mean(), original.std()
@@ -193,10 +300,8 @@ def generate_synthetic_data(df, n_samples, preserve_corr, noise_level, col_types
         
         if pd.api.types.is_numeric_dtype(df[col]):
             synthetic_data[col] = generate_numeric_column(col_data, n_samples, noise_level)
-        
         elif pd.api.types.is_datetime64_any_dtype(df[col]):
             synthetic_data[col] = generate_datetime_column(col_data, n_samples)
-        
         else:
             synthetic_data[col] = generate_categorical_column(col_data, n_samples)
     
@@ -208,7 +313,6 @@ def generate_numeric_column(data, n_samples, noise_level):
     
     if SCIPY_AVAILABLE:
         try:
-            # Try to fit best distribution
             distributions = [stats.norm, stats.lognorm, stats.expon]
             best_dist = None
             best_sse = np.inf
@@ -225,12 +329,10 @@ def generate_numeric_column(data, n_samples, noise_level):
                     continue
             
             if best_dist:
-                synthetic = best_dist[0].rvs(*best_dist[1], size=n_samples)
-                return synthetic
+                return best_dist[0].rvs(*best_dist[1], size=n_samples)
         except:
             pass
     
-    # Fallback: Bootstrap with noise
     synthetic = np.random.choice(data, size=n_samples, replace=True)
     if noise_level > 0:
         noise = np.random.normal(0, data.std() * noise_level, n_samples)
@@ -249,21 +351,18 @@ def generate_datetime_column(data, n_samples):
     
     date_range = (max_date - min_date).total_seconds()
     random_seconds = np.random.uniform(0, date_range, n_samples)
-    
-    synthetic = [min_date + pd.Timedelta(seconds=s) for s in random_seconds]
-    return synthetic
+    return [min_date + pd.Timedelta(seconds=s) for s in random_seconds]
 
 
 def generate_categorical_column(data, n_samples):
     """Generate synthetic categorical column"""
     value_counts = data.value_counts(normalize=True)
-    synthetic = np.random.choice(
+    return np.random.choice(
         value_counts.index,
         size=n_samples,
         p=value_counts.values,
         replace=True
     )
-    return synthetic
 
 
 def render_stats_comparison(original, synthetic):
@@ -272,29 +371,28 @@ def render_stats_comparison(original, synthetic):
     comparison_data = []
     
     for col in original.columns:
+        if col not in synthetic.columns:
+            continue
         if pd.api.types.is_numeric_dtype(original[col]):
             comparison_data.append({
-                'Column': col,
-                'Metric': 'Mean',
+                'Column': col, 'Metric': 'Mean',
                 'Original': f"{original[col].mean():.2f}",
                 'Synthetic': f"{synthetic[col].mean():.2f}"
             })
             comparison_data.append({
-                'Column': col,
-                'Metric': 'Std Dev',
+                'Column': col, 'Metric': 'Std Dev',
                 'Original': f"{original[col].std():.2f}",
                 'Synthetic': f"{synthetic[col].std():.2f}"
             })
         else:
             comparison_data.append({
-                'Column': col,
-                'Metric': 'Unique Values',
+                'Column': col, 'Metric': 'Unique Values',
                 'Original': str(original[col].nunique()),
                 'Synthetic': str(synthetic[col].nunique())
             })
     
     if comparison_data:
-        st.dataframe(pd.DataFrame(comparison_data), use_container_width=True)
+        st.dataframe(pd.DataFrame(comparison_data))
     else:
         st.info("No columns to compare")
 
@@ -302,26 +400,15 @@ def render_stats_comparison(original, synthetic):
 def render_distribution_comparison(original, synthetic):
     """Render distribution comparison"""
     
-    numeric_cols = [c for c in original.columns if pd.api.types.is_numeric_dtype(original[c])]
+    numeric_cols = [c for c in original.columns
+                    if pd.api.types.is_numeric_dtype(original[c]) and c in synthetic.columns]
     
     if numeric_cols:
         selected_col = st.selectbox("Select column to visualize:", numeric_cols, key="synth_viz_col")
         
         fig = go.Figure()
-        
-        fig.add_trace(go.Histogram(
-            x=original[selected_col],
-            name='Original',
-            opacity=0.7,
-            marker_color='#6366f1'
-        ))
-        
-        fig.add_trace(go.Histogram(
-            x=synthetic[selected_col],
-            name='Synthetic',
-            opacity=0.7,
-            marker_color='#10b981'
-        ))
+        fig.add_trace(go.Histogram(x=original[selected_col], name='Original', opacity=0.7, marker_color='#6366f1'))
+        fig.add_trace(go.Histogram(x=synthetic[selected_col], name='Synthetic', opacity=0.7, marker_color='#10b981'))
         
         fig.update_layout(
             barmode='overlay',
@@ -332,7 +419,6 @@ def render_distribution_comparison(original, synthetic):
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='#e2e8f0')
         )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
     else:
         st.info("No numeric columns available for visualization")

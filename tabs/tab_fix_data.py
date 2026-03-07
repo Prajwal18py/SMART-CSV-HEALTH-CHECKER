@@ -7,17 +7,160 @@ import pandas as pd
 import numpy as np
 import time
 from features.imputation import ai_smart_imputation
+from utils.export_utils import smart_download_button, get_format_label
 
-def render_fix_data_tab(df, results, col_types, sidebar_settings):
+# ══════════════════════════════════════════════════════════════════════
+# ENHANCED CSS - MATCHING EDA STYLE
+# ══════════════════════════════════════════════════════════════════════
+FIX_DATA_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap');
+
+/* Section headers matching EDA */
+.eda-section-head {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin: 1.6rem 0 1rem 0;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid rgba(99,102,241,.2);
+}
+.eda-section-head .icon { font-size:1.3rem; }
+.eda-section-head .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #c7d2fe;
+    margin: 0;
+}
+.eda-section-head .count {
+    margin-left: auto;
+    background: rgba(99,102,241,.2);
+    color: #a5b4fc;
+    border-radius: 20px;
+    padding: .15rem .6rem;
+    font-size: .72rem;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+}
+
+/* Alert cards */
+.eda-alert {
+    border-radius: 12px;
+    padding: 1rem 1.3rem;
+    margin-bottom: .7rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .9rem;
+    border: 1px solid;
+    transition: transform .2s, box-shadow .2s;
+}
+.eda-alert:hover { 
+    transform: translateX(4px);
+    box-shadow: 0 4px 16px rgba(99,102,241,.15);
+}
+.eda-alert.warning {
+    background: rgba(251,191,36,.07);
+    border-color: rgba(251,191,36,.3);
+}
+.eda-alert.info {
+    background: rgba(99,102,241,.07);
+    border-color: rgba(99,102,241,.25);
+}
+.eda-alert.success {
+    background: rgba(16,185,129,.07);
+    border-color: rgba(16,185,129,.25);
+}
+
+/* Info/Status cards */
+.status-card {
+    background: linear-gradient(135deg, rgba(30,41,59,.9), rgba(15,23,42,.9));
+    border: 1px solid rgba(99,102,241,.18);
+    border-radius: 14px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    transition: border-color .25s, box-shadow .25s, transform .25s;
+}
+.status-card:hover {
+    border-color: rgba(99,102,241,.5);
+    box-shadow: 0 4px 20px rgba(99,102,241,.12);
+    transform: translateY(-2px);
+}
+
+/* Buttons */
+.stButton > button {
+    transition: all 0.3s ease !important;
+    border-radius: 12px !important;
+}
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(99,102,241, 0.3) !important;
+}
+
+/* Download buttons */
+.stDownloadButton > button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.stDownloadButton > button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Expanders */
+.streamlit-expanderHeader {
+    transition: all 0.3s ease !important;
+    border-radius: 8px !important;
+}
+.streamlit-expanderHeader:hover {
+    background: rgba(99, 102, 241, 0.05) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Data editor */
+[data-testid="stDataFrameResizable"] {
+    transition: box-shadow 0.3s ease;
+}
+[data-testid="stDataFrameResizable"]:hover {
+    box-shadow: 0 4px 16px rgba(99,102,241,.15);
+}
+</style>
+"""
+
+def render_fix_data_tab(df_original, results, col_types, sidebar_settings):
     """
-    Render the complete Fix Data tab with all features.
+    Render the Fix Data tab.
+    ✨ NOW READS: anomaly_cleaned_df if available
     """
+    st.markdown(FIX_DATA_CSS, unsafe_allow_html=True)
+    
+    fmt_label = get_format_label()
     
     st.subheader("🛠️ Auto-Clean Your Data")
     
+    # ✨ SMART DATA SOURCE: Use anomaly-cleaned data if available
+    df = df_original  # Default
+    data_source_label = "Original"
+    
+    if st.session_state.get('anomaly_cleaned_df') is not None:
+        df = st.session_state['anomaly_cleaned_df']
+        data_source_label = "Anomaly-Free (from AI Deep Dive)"
+        
+        st.success(
+            f"✅ Using **{data_source_label}** data — anomalies already removed! "
+            f"Now clean missing values, duplicates & outliers below.",
+            icon="🎯"
+        )
+    else:
+        st.info(
+            "ℹ️ Using **Original** data. Visit **AI Deep Dive** first to remove anomalies, "
+            "then return here for final cleaning.",
+            icon="💡"
+        )
+    
     # ✨ WORKFLOW GUIDANCE BANNER
     st.info(
-        "💡 **Recommended Workflow:** Clean your data here → Then visit the **📐 Skewness tab** to normalize distributions → Finally check **📊 Visualizations** and **📉 PCA** tabs!",
+        "💡 **Recommended Workflow:** AI Deep Dive (remove anomalies) → Fix Data (clean remaining issues) → "
+        "EDA → Skewness → Feature Engineering → Model Builder",
         icon="🚀"
     )
     st.markdown("---")
@@ -33,7 +176,6 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
     # =================================================================
     # 🎯 OUTLIER DETECTION ALERT
     # =================================================================
-    # Count outliers using IQR method
     outlier_count = 0
     outlier_cols = []
     
@@ -70,14 +212,13 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             st.caption(f"This will immediately process all missing values using the {imputation_method} method.")
         
         with c_btn:
-            st.write("") # Spacer to align button vertically
+            st.write("")
             apply_btn = st.button(
                 f"⚡ Apply {imputation_method.upper()} Now", 
-                type="primary", 
-                width="stretch"
+                type="primary"
             )
 
-        # 3. Processing Logic (Uses st.status instead of spinner)
+        # 3. Processing Logic
         if apply_btn:
             cols_missing = [c for c in df.columns if df[c].isna().sum() > 0]
             
@@ -85,11 +226,9 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                 st.toast("✅ Data is already complete!", icon="✨")
                 st.success("✅ Data is already complete! No imputation needed.")
             else:
-                # MODERN LOADING UI
                 with st.status(f"🚀 Running {imputation_method.upper()} Imputation...", expanded=True) as status:
                     df_global = df.copy()
                     
-                    # Track operations for code generation
                     cleaning_operations = {
                         'method': imputation_method,
                         'impute_mean': [],
@@ -99,7 +238,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     }
                     
                     st.write("🔍 Analyzing missing patterns...")
-                    time.sleep(0.5) # UX pause to let user see the step
+                    time.sleep(0.5)
                     
                     if imputation_method == 'mice':
                         st.write("🧠 Training AI models for imputation...")
@@ -112,7 +251,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                         df_global = df_global.dropna()
                         cleaning_operations['drop_rows'] = True
                         
-                    else: # Mean/Mode
+                    else:
                         st.write("📊 Calculating statistical averages...")
                         for col in cols_missing:
                             if pd.api.types.is_numeric_dtype(df_global[col]):
@@ -127,16 +266,13 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     time.sleep(0.3)
                     status.update(label="✅ Imputation Complete!", state="complete", expanded=False)
                     
-                    # Save to session state so it persists
                     st.session_state.global_cleaned_df = df_global
-                    # ✅ SAVE OPERATIONS FOR CODE GENERATION
                     st.session_state['cleaning_ops'] = cleaning_operations
 
-        # 4. Results Display (FULL WIDTH - OUTSIDE COLUMNS)
+        # 4. Results Display
         if st.session_state.global_cleaned_df is not None:
             st.markdown("---")
             
-            # Success Metrics
             res_df = st.session_state.global_cleaned_df
             rows_kept = len(res_df)
             rows_orig = len(df)
@@ -150,25 +286,22 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     st.warning(f"⚠️ **Note:** {outlier_count} outliers still present. Use wizard or manual section below to handle them.")
             
             with col_res2:
-                 st.download_button(
-                    label="⬇️ Download CSV",
-                    data=res_df.to_csv(index=False).encode('utf-8'),
-                    file_name=f"cleaned_data_{imputation_method}.csv",
-                    mime="text/csv",
-                    width="stretch"
+                smart_download_button(
+                    res_df,
+                    label=f"⬇️ Download {fmt_label}",
+                    suffix=f"cleaned_{imputation_method}",
+                    key="dl_global_strategy",
+                    button_width='stretch'
                 )
 
-            # Data Preview (Centered and Full Width)
             with st.expander("👀 View Cleaned Data Result", expanded=True):
                 st.dataframe(res_df.head(50), height=400)
 
     st.markdown("---")
 
-
     # =================================================================
-    # AI AUTO-REPAIR (MICE/Advanced)
+    # AI AUTO-REPAIR
     # =================================================================
-    # We expand this automatically if MICE is selected in sidebar
     start_expanded = (imputation_method == 'mice')
     
     with st.expander("🤖 AI Auto-Repair (Advanced)", expanded=start_expanded):
@@ -205,10 +338,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     
                     st.dataframe(df_repaired.head(20))
                     
-                    # ✅ SAVE TO SESSION STATE for Skewness tab
                     st.session_state['global_cleaned_df'] = df_repaired
-                    
-                    # ✅ SAVE OPERATIONS FOR CODE GENERATION
                     st.session_state['cleaning_ops'] = {
                         'method': 'mice',
                         'impute_mice': repaired_cols,
@@ -217,23 +347,28 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                         'drop_rows': False
                     }
                     
-                    # ✨ REMINDER MESSAGE
-                    st.info("💡 **Next Step:** Visit the **Skewness tab** to normalize your data distribution!", icon="📐")
+                    st.info("💡 **Next Steps:** Skewness → Feature Engineering → Model Builder. "
+                            "Use Imbalanced Data tab if you discover class imbalance after training.",
+                            icon="📐")
                     
-                    st.download_button(
-                        "⬇️ Download AI-Repaired CSV",
-                        df_repaired.to_csv(index=False).encode('utf-8'),
-                        "ai_repaired_data.csv",
-                        "text/csv",
-                        width="stretch",
-                        key="download_ai_repaired"
+                    smart_download_button(
+                        df_repaired,
+                        label=f"⬇️ Download AI-Repaired {fmt_label}",
+                        suffix="ai_repaired",
+                        key="dl_ai_repaired",
+                        button_width='stretch'
                     )
 
     # =================================================================
-    # SMART CLEANING WIZARD (ENHANCED WITH OUTLIER OPTIONS)
+    # SMART CLEANING WIZARD
     # =================================================================
     st.markdown("---")
-    st.markdown('<h2 class="gradient-header">🔮 Smart Cleaning Wizard</h2>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="eda-section-head">
+        <span class="icon">🔮</span>
+        <p class="title">Smart Cleaning Wizard</p>
+    </div>
+    """, unsafe_allow_html=True)
     st.caption("Let the wizard guide you through cleaning step-by-step (handles missing data, duplicates, and outliers)")
     
     if 'wizard_step' not in st.session_state:
@@ -242,7 +377,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
         st.session_state.wizard_actions = {}
     
     if st.session_state.wizard_step == 0:
-        if st.button("🪄 Start Cleaning Wizard", type="primary", width="stretch"):
+        if st.button("🪄 Start Cleaning Wizard", type="primary"):
             st.session_state.wizard_step = 1
             st.rerun()
     
@@ -268,19 +403,17 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             st.markdown("### Step 1: Handle Missing Values")
             missing_cols = df.columns[df.isna().any()].tolist()
             
-            # Determine default action based on Sidebar Setting
-            default_index = 0  # Skip
+            default_index = 0
             if imputation_method == 'mean':
-                default_index = 1 # Fill Mean
+                default_index = 1
             elif imputation_method == 'drop':
-                default_index = 3 # Drop Column
+                default_index = 3
             
             if missing_cols:
                 for col in missing_cols[:5]:
-                    # Adjust default index based on column type + sidebar setting
                     final_index = default_index
                     if imputation_method == 'mean' and not pd.api.types.is_numeric_dtype(df[col]):
-                        final_index = 2 # Fill Mode for categorical if 'mean' was selected
+                        final_index = 2
                         
                     act = st.selectbox(
                         f"Action for {col}",
@@ -311,11 +444,10 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                 st.session_state.wizard_step = 3
                 st.rerun()
         
-        # STEP 3: Outliers (ENHANCED)
+        # STEP 3: Outliers
         elif current_step == 3:
             st.markdown("### Step 3: Handle Outliers")
             
-            # Count outliers per column
             outlier_details = []
             for col in df.select_dtypes(include=[np.number]).columns:
                 Q1 = df[col].quantile(0.25)
@@ -346,7 +478,6 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     help="• Keep: No changes\n• Remove: Delete rows with outliers\n• Cap: Replace outliers with boundary values\n• Log: Apply log transformation to reduce skew"
                 )
                 
-                # If user chooses cap or log, let them select columns
                 if st.session_state.wizard_actions.get('outlier_method') in ["Cap outliers (Winsorize)", "Log transform numeric columns"]:
                     outlier_cols_list = [d['Column'] for d in outlier_details]
                     st.session_state.wizard_actions['outlier_cols'] = st.multiselect(
@@ -373,7 +504,6 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             if st.button("✨ Apply All Changes", type="primary"):
                 df_clean = df.copy()
                 
-                # Track wizard operations for code generation
                 wizard_ops = {
                     'method': 'wizard',
                     'impute_mean': [],
@@ -433,7 +563,6 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     cols_to_log = st.session_state.wizard_actions.get('outlier_cols', [])
                     for col in cols_to_log:
                         if col in df_clean.columns and pd.api.types.is_numeric_dtype(df_clean[col]):
-                            # Ensure positive values for log
                             if (df_clean[col] > 0).all():
                                 df_clean[col] = np.log1p(df_clean[col])
                             else:
@@ -441,10 +570,7 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     wizard_ops['outlier_treatment'] = 'log'
                     wizard_ops['outlier_cols'] = cols_to_log
                 
-                # ✅ SAVE TO SESSION STATE for Skewness tab
                 st.session_state['global_cleaned_df'] = df_clean
-                
-                # ✅ SAVE OPERATIONS FOR CODE GENERATION
                 st.session_state['cleaning_ops'] = wizard_ops
                 
                 st.toast("Changes applied successfully!", icon="✨")
@@ -454,15 +580,14 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                 )
                 st.dataframe(df_clean.head(20))
                 
-                # ✨ REMINDER MESSAGE
                 st.info("💡 **Next Step:** Visit the **Skewness tab** to normalize your data distribution!", icon="📐")
                 
-                st.download_button(
-                    "⬇️ Download Cleaned CSV",
-                    df_clean.to_csv(index=False).encode('utf-8'),
-                    "wizard_cleaned.csv",
-                    "text/csv",
-                    width="stretch"
+                smart_download_button(
+                    df_clean,
+                    label=f"⬇️ Download Cleaned {fmt_label}",
+                    suffix="wizard_cleaned",
+                    key="dl_wizard",
+                    button_width='stretch'
                 )
             
             if st.button("🔄 Start New Wizard"):
@@ -471,42 +596,63 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                 st.rerun()
 
     # =================================================================
-    # MANUAL OUTLIER TREATMENT SECTION (NEW)
+    # MANUAL OUTLIER TREATMENT
     # =================================================================
     st.markdown("---")
-    st.markdown('<h3 class="gradient-header">🎯 Manual Outlier Treatment</h3>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="eda-section-head">
+        <span class="icon">🎯</span>
+        <p class="title">Manual Outlier Treatment</p>
+    </div>
+    """, unsafe_allow_html=True)
     st.caption("Fine-tune outlier handling for specific columns")
     
     with st.expander("🔧 Configure Outlier Treatment", expanded=False):
-        # Select columns for outlier treatment
         numeric_cols = col_types['numeric']
         
         if numeric_cols:
-            outlier_treat_cols = st.multiselect(
-                "📊 Select numeric columns to treat for outliers:",
-                numeric_cols,
-                help="Choose columns where you want to detect and handle outliers"
+            # Show method selector FIRST
+            outlier_treat_method = st.selectbox(
+                "🛠️ Treatment method:",
+                [
+                    "Remove AI-detected anomalies",  # ← First option, doesn't need column selection
+                    "Remove outlier rows (IQR method)",
+                    "Cap outliers (Winsorize)",
+                    "Log transform",
+                    "Square root transform",
+                    "Z-score filter (remove beyond threshold)"
+                ],
+                help="AI anomalies are detected in the AI Deep Dive tab. Other methods work on selected columns."
             )
             
-            if outlier_treat_cols:
-                # Method selector
-                outlier_treat_method = st.selectbox(
-                    "🛠️ Treatment method:",
-                    [
-                        "Remove outlier rows (IQR method)",
-                        "Cap outliers (Winsorize)",
-                        "Log transform",
-                        "Square root transform",
-                        "Z-score filter (remove beyond threshold)"
-                    ],
-                    help="Different methods for handling outliers"
+            # Column selection only needed for non-AI methods
+            if outlier_treat_method != "Remove AI-detected anomalies":
+                outlier_treat_cols = st.multiselect(
+                    "📊 Select numeric columns to treat for outliers:",
+                    numeric_cols,
+                    help="Choose columns where you want to detect and handle outliers"
                 )
+            else:
+                outlier_treat_cols = []  # Not needed for AI anomalies
+            
+            # Show sliders and preview only for methods that need them
+            if outlier_treat_cols or outlier_treat_method == "Remove AI-detected anomalies":
                 
-                # Sensitivity/threshold slider
                 col_slider1, col_slider2 = st.columns(2)
                 
                 with col_slider1:
-                    if "Z-score" in outlier_treat_method:
+                    if outlier_treat_method == "Remove AI-detected anomalies":
+                        # Show info about AI anomalies instead of slider
+                        if 'results' in st.session_state and 'stats' in st.session_state['results']:
+                            stats = st.session_state['results']['stats']
+                            if 'ai_anomalies' in stats and stats['ai_anomalies'] is not None:
+                                anomaly_count = len(stats['ai_anomalies']['indices'])
+                                st.info(f"ℹ️ {anomaly_count} AI anomalies detected in AI Deep Dive tab")
+                            else:
+                                st.warning("⚠️ No AI anomalies found. Run AI Deep Dive first.")
+                        else:
+                            st.warning("⚠️ No AI analysis found. Run AI Deep Dive first.")
+                    elif "Z-score" in outlier_treat_method:
                         threshold = st.slider(
                             "Z-score threshold:",
                             1.0, 4.0, 3.0, 0.5,
@@ -520,30 +666,38 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                         )
                 
                 with col_slider2:
-                    # Show preview of how many outliers will be affected
-                    preview_count = 0
-                    for col in outlier_treat_cols:
-                        if col in df.columns:
-                            if "Z-score" in outlier_treat_method:
-                                z_scores = np.abs((df[col] - df[col].mean()) / df[col].std())
-                                preview_count += (z_scores > threshold).sum()
-                            else:
-                                Q1, Q3 = df[col].quantile(0.25), df[col].quantile(0.75)
-                                IQR = Q3 - Q1
-                                outliers = (df[col] < (Q1 - threshold * IQR)) | (df[col] > (Q3 + threshold * IQR))
-                                preview_count += outliers.sum()
-                    
-                    st.metric(
-                        "Outliers to treat:",
-                        preview_count,
-                        help="Number of outlier values that will be affected"
-                    )
+                    if outlier_treat_method == "Remove AI-detected anomalies":
+                        # Show anomaly count metric
+                        if 'results' in st.session_state and 'stats' in st.session_state['results']:
+                            stats = st.session_state['results']['stats']
+                            if 'ai_anomalies' in stats and stats['ai_anomalies'] is not None:
+                                st.metric(
+                                    "Anomalies to remove:",
+                                    len(stats['ai_anomalies']['indices']),
+                                    help="Entire rows will be removed"
+                                )
+                    else:
+                        preview_count = 0
+                        for col in outlier_treat_cols:
+                            if col in df.columns:
+                                if "Z-score" in outlier_treat_method:
+                                    z_scores = np.abs((df[col] - df[col].mean()) / df[col].std())
+                                    preview_count += (z_scores > threshold).sum()
+                                else:
+                                    Q1, Q3 = df[col].quantile(0.25), df[col].quantile(0.75)
+                                    IQR = Q3 - Q1
+                                    outliers = (df[col] < (Q1 - threshold * IQR)) | (df[col] > (Q3 + threshold * IQR))
+                                    preview_count += outliers.sum()
+                        
+                        st.metric(
+                            "Outliers to treat:",
+                            preview_count,
+                            help="Number of outlier values that will be affected"
+                        )
                 
-                # Apply button
-                if st.button("⚡ Apply Outlier Treatment", type="primary", width="stretch"):
+                if st.button("⚡ Apply Outlier Treatment", type="primary"):
                     df_outlier_clean = df.copy()
                     
-                    # Track operations
                     outlier_ops = {
                         'method': 'manual_outlier',
                         'treatment': outlier_treat_method,
@@ -552,7 +706,43 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                     }
                     
                     with st.status("🔧 Treating outliers...", expanded=True) as status:
-                        if outlier_treat_method == "Remove outlier rows (IQR method)":
+                        # Handle AI anomaly removal
+                        if outlier_treat_method == "Remove AI-detected anomalies":
+                            # Check if AI analysis has been run
+                            if 'results' not in st.session_state or 'stats' not in st.session_state['results']:
+                                status.update(label="❌ No analysis found", state="error", expanded=False)
+                                st.error(
+                                    "❌ No analysis data found. Please visit the **🧠 AI Deep Dive** tab first "
+                                    "to run anomaly detection, then return here."
+                                )
+                                st.stop()
+                            
+                            stats = st.session_state['results']['stats']
+                            
+                            if 'ai_anomalies' not in stats or stats['ai_anomalies'] is None:
+                                status.update(label="❌ No AI anomalies found", state="error", expanded=False)
+                                st.error(
+                                    "❌ No AI anomalies detected. Please visit the **🧠 AI Deep Dive** tab first "
+                                    "to run anomaly detection."
+                                )
+                                st.stop()
+                            
+                            anomaly_indices = stats['ai_anomalies']['indices']
+                            
+                            if len(anomaly_indices) == 0:
+                                status.update(label="✅ No anomalies to remove", state="complete", expanded=False)
+                                st.success("✅ No AI anomalies detected in your dataset!")
+                                st.stop()
+                            
+                            st.write(f"🗑️ Removing {len(anomaly_indices)} AI-detected anomalies...")
+                            df_outlier_clean = df_outlier_clean.drop(index=anomaly_indices).reset_index(drop=True)
+                            st.write(f"   ✓ Removed {len(anomaly_indices)} rows")
+                            
+                            outlier_ops['treatment'] = 'ai_anomaly_removal'
+                            outlier_ops['rows_removed'] = len(anomaly_indices)
+                            outlier_ops['columns'] = []  # N/A for AI anomalies
+                        
+                        elif outlier_treat_method == "Remove outlier rows (IQR method)":
                             for col in outlier_treat_cols:
                                 if col in df_outlier_clean.columns:
                                     Q1, Q3 = df_outlier_clean[col].quantile(0.25), df_outlier_clean[col].quantile(0.75)
@@ -595,32 +785,33 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
                         
                         status.update(label="✅ Outlier treatment complete!", state="complete", expanded=False)
                     
-                    # Save results
                     st.session_state['global_cleaned_df'] = df_outlier_clean
                     st.session_state['cleaning_ops'] = outlier_ops
                     
                     rows_removed = len(df) - len(df_outlier_clean)
                     st.success(f"✅ Treatment applied! {rows_removed} rows affected.")
                     
-                    # Show preview
                     st.dataframe(df_outlier_clean.head(20))
                     
-                    # Download button
-                    st.download_button(
-                        "⬇️ Download Outlier-Treated CSV",
-                        df_outlier_clean.to_csv(index=False).encode('utf-8'),
-                        "outlier_treated_data.csv",
-                        "text/csv",
-                        width="stretch"
+                    smart_download_button(
+                        df_outlier_clean,
+                        label=f"⬇️ Download Outlier-Treated {fmt_label}",
+                        suffix="outlier_treated",
+                        key="dl_outlier",
+                        button_width='stretch'
                     )
         else:
             st.info("ℹ️ No numeric columns available for outlier treatment.")
-
     # =================================================================
     # MANUAL CLEANING OPTIONS
     # =================================================================
     st.markdown("---")
-    st.markdown('<h3 class="gradient-header">🔧 Manual Cleaning Options</h3>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="eda-section-head">
+        <span class="icon">🔧</span>
+        <p class="title">Manual Cleaning Options</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     cleaning_ops = {}
     c1, c2 = st.columns(2)
@@ -641,7 +832,6 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             )
     
     with c2:
-        # Default numeric/categorical selections based on Sidebar Strategy
         default_mean = []
         default_mode = []
         
@@ -662,7 +852,6 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
     
     df_clean_preview = df.copy()
     
-    # Apply preview logic
     if cleaning_ops.get('drop_duplicates'):
         df_clean_preview = df_clean_preview.drop_duplicates()
     
@@ -682,7 +871,12 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
     # =================================================================
     # INTERACTIVE DATA EDITOR
     # =================================================================
-    st.markdown('<h3 class="gradient-header">✏️ Interactive Data Editor</h3>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="eda-section-head">
+        <span class="icon">✏️</span>
+        <p class="title">Interactive Data Editor</p>
+    </div>
+    """, unsafe_allow_html=True)
     st.caption("Double-click on any cell below to manually fix typos or values.")
     
     edited_df = st.data_editor(
@@ -697,15 +891,13 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
     col_reset, col_save = st.columns([1, 3])
     
     with col_reset:
-        if st.button("🔄 Reset to Original", help="Undo all manual edits", width="stretch"):
+        if st.button("🔄 Reset to Original", help="Undo all manual edits"):
             st.rerun()
     
     with col_save:
-        if st.button("✨ Save Changes & Download Cleaned Data", type="primary", width="stretch"):
-            # ✅ SAVE TO SESSION STATE for Skewness tab
+        if st.button("✨ Save Changes & Download Cleaned Data", type="primary"):
             st.session_state['global_cleaned_df'] = edited_df
             
-            # ✅ SAVE OPERATIONS FOR CODE GENERATION
             cleaning_ops['method'] = 'manual'
             st.session_state['cleaning_ops'] = cleaning_ops
             
@@ -720,13 +912,12 @@ def render_fix_data_tab(df, results, col_types, sidebar_settings):
             st.toast("Data cleaned and saved successfully!", icon="✨")
             st.success(f"✅ Auto-cleaned {ops_count} issues + saved manual edits!")
             
-            # ✨ REMINDER MESSAGE
             st.info("💡 **Next Step:** Visit the **Skewness tab** to normalize your data distribution!", icon="📐")
             
-            st.download_button(
-                "⬇️ Download Cleaned CSV",
-                edited_df.to_csv(index=False).encode('utf-8'),
-                "cleaned_data.csv",
-                "text/csv",
-                width="stretch"
+            smart_download_button(
+                edited_df,
+                label=f"⬇️ Download Cleaned {fmt_label}",
+                suffix="manual_cleaned",
+                key="dl_manual",
+                button_width='stretch'
             )

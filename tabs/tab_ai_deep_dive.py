@@ -9,9 +9,92 @@ import plotly.graph_objects as go
 import pickle
 from features.statistics import explain_anomaly, get_anomaly_severity
 
+# ══════════════════════════════════════════════════════════════════════
+# ENHANCED CSS - MATCHING EDA STYLE
+# ══════════════════════════════════════════════════════════════════════
+AI_DEEP_DIVE_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap');
+
+/* Section headers matching EDA style */
+.eda-section-head {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin: 1.6rem 0 1rem 0;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid rgba(99,102,241,.2);
+}
+.eda-section-head .icon { font-size:1.3rem; }
+.eda-section-head .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #c7d2fe;
+    margin: 0;
+}
+.eda-section-head .count {
+    margin-left: auto;
+    background: rgba(99,102,241,.2);
+    color: #a5b4fc;
+    border-radius: 20px;
+    padding: .15rem .6rem;
+    font-size: .72rem;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+}
+
+/* Info cards with hover */
+.info-card {
+    background: linear-gradient(135deg, rgba(30,41,59,.9), rgba(15,23,42,.9));
+    border: 1px solid rgba(99,102,241,.18);
+    border-radius: 14px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    transition: border-color .25s, box-shadow .25s, transform .25s;
+}
+.info-card:hover {
+    border-color: rgba(99,102,241,.5);
+    box-shadow: 0 4px 20px rgba(99,102,241,.12);
+    transform: translateY(-2px);
+}
+
+/* Buttons */
+.stButton > button {
+    transition: all 0.3s ease !important;
+    border-radius: 12px !important;
+}
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(99,102,241, 0.3) !important;
+}
+
+/* Download buttons */
+.stDownloadButton > button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.stDownloadButton > button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Expanders */
+.streamlit-expanderHeader {
+    transition: all 0.3s ease !important;
+    border-radius: 8px !important;
+}
+.streamlit-expanderHeader:hover {
+    background: rgba(99, 102, 241, 0.05) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+}
+</style>
+"""
 
 def render_ai_deep_dive_tab(df, results, col_types, settings):
-    """Render the AI Deep Dive tab"""
+    """Render the AI Deep Dive tab with enhanced UI"""
+    
+    # Apply enhanced CSS
+    st.markdown(AI_DEEP_DIVE_CSS, unsafe_allow_html=True)
     
     st.markdown('<h2 class="gradient-header">🧠 AI Anomaly Analysis</h2>', unsafe_allow_html=True)
     
@@ -64,15 +147,31 @@ anomalies.to_csv('detected_anomalies.csv', index=False)""", language='python')
         pca_data = results['stats']['pca']
         ai_data = results['stats']['ai_anomalies']
         
-        # Detection summary
+        # Detection summary with enhanced card
         ai_only = len(results['stats']['ai_anomalies']['indices'])
         stat_only = len(results['stats']['outlier_info'])
         
-        st.info(f"""📊 **Detection Summary:**
-        - Total rows analyzed: {len(df):,}
-        - AI Anomalies Found: {ai_only} (Complex patterns)
-        - Statistical Outliers: {stat_only} (Simple value checks)
-        """)
+        st.markdown(f"""
+        <div class="info-card">
+            <div style="font-family: 'Syne', sans-serif; color: #a5b4fc; font-size: 1rem; font-weight: 600; margin-bottom: 0.8rem;">
+                📊 Detection Summary
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <div style="text-align: center;">
+                    <div style="font-family: 'DM Mono', monospace; color: #e2e8f0; font-size: 1.5rem; font-weight: 600;">{len(df):,}</div>
+                    <div style="color: rgba(203,213,224,.5); font-size: 0.75rem;">Total Rows</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-family: 'DM Mono', monospace; color: #6ee7b7; font-size: 1.5rem; font-weight: 600;">{ai_only}</div>
+                    <div style="color: rgba(203,213,224,.5); font-size: 0.75rem;">AI Anomalies</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-family: 'DM Mono', monospace; color: #fbbf24; font-size: 1.5rem; font-weight: 600;">{stat_only}</div>
+                    <div style="color: rgba(203,213,224,.5); font-size: 0.75rem;">Statistical Outliers</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         col_viz, col_explain = st.columns([3, 1])
         
@@ -111,7 +210,7 @@ anomalies.to_csv('detected_anomalies.csv', index=False)""", language='python')
                 font=dict(color='#e2e8f0'),
                 height=500
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig)
         
         # Right: Anomaly Explanation
         with col_explain:
@@ -139,10 +238,82 @@ anomalies.to_csv('detected_anomalies.csv', index=False)""", language='python')
                         st.info("💡 No single feature stands out. This is a complex multi-dimensional anomaly.")
         
         # =================================================================
-        # ANOMALY TABLE
+        # ✨ NEW: REMOVE ANOMALIES BUTTON
         # =================================================================
         st.markdown("---")
-        st.subheader(f"🔍 Anomaly Rows ({len(ai_data['indices'])} detected)")
+        st.markdown(f"""
+        <div class="eda-section-head">
+            <span class="icon">🗑️</span>
+            <p class="title">Remove Anomalies</p>
+            <span class="count">{len(ai_data['indices'])} detected</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col_remove_text, col_remove_btn = st.columns([3, 1])
+        
+        with col_remove_text:
+            st.markdown(
+                f"**{len(ai_data['indices'])} AI-detected anomalies** found. "
+                "These are complex multi-dimensional outliers that can bias ML models. "
+                "Click the button to remove them from your dataset."
+            )
+        
+        with col_remove_btn:
+            if st.button("🗑️ Remove All Anomalies", type="primary", width='stretch'):
+                from utils.export_utils import smart_download_button, get_format_label
+                fmt_label = get_format_label()
+                
+                with st.status("🔧 Removing anomalies...", expanded=True) as status:
+                    st.write(f"🗑️ Removing {len(ai_data['indices'])} rows...")
+                    
+                    df_cleaned = df.drop(index=ai_data['indices']).reset_index(drop=True)
+                    
+                    st.write(f"✅ Removed {len(ai_data['indices'])} anomalies")
+                    st.write(f"📊 Dataset: {len(df):,} → {len(df_cleaned):,} rows")
+                    
+                    st.session_state['anomaly_cleaned_df'] = df_cleaned
+                    
+                    status.update(label="✅ Anomalies removed!", state="complete", expanded=False)
+                
+                st.success(
+                    f"✅ **Removed {len(ai_data['indices'])} anomaly rows!** "
+                    f"Dataset reduced from {len(df):,} to {len(df_cleaned):,} rows."
+                )
+                
+                st.info(
+                    "💡 **Next Step:** Visit the **🛠️ Fix Data** tab to handle missing values, "
+                    "duplicates, and remaining outliers in your cleaned dataset.",
+                    icon="➡️"
+                )
+                
+                smart_download_button(
+                    df_cleaned,
+                    label=f"⬇️ Download Anomaly-Free {fmt_label}",
+                    suffix="anomaly_removed",
+                    key="dl_anomaly_free",
+                    button_width='stretch'
+                )
+                
+                st.rerun()
+        
+        if st.session_state.get('anomaly_cleaned_df') is not None:
+            st.success(
+                f"✅ **Anomalies already removed!** "
+                f"Working with {len(st.session_state['anomaly_cleaned_df']):,} clean rows. "
+                "Continue to **Fix Data** tab.",
+                icon="🎯"
+            )
+        # =================================================================
+        # ANOMALY TABLE WITH SECTION HEADER
+        # =================================================================
+        st.markdown("---")
+        st.markdown(f"""
+        <div class="eda-section-head">
+            <span class="icon">🔍</span>
+            <p class="title">Anomaly Rows</p>
+            <span class="count">{len(ai_data['indices'])} detected</span>
+        </div>
+        """, unsafe_allow_html=True)
         
         col_table, col_scores = st.columns([3, 1])
         
@@ -168,14 +339,19 @@ anomalies.to_csv('detected_anomalies.csv', index=False)""", language='python')
                 xaxis_title="Score",
                 yaxis_title="Count"
             )
-            st.plotly_chart(score_fig, use_container_width=True)
+            st.plotly_chart(score_fig)
         
         # =================================================================
-        # FEATURE IMPORTANCE
+        # FEATURE IMPORTANCE WITH SECTION HEADER
         # =================================================================
         if results['stats']['feature_importance'] is not None:
             st.markdown("---")
-            st.subheader("🎯 Feature Importance")
+            st.markdown("""
+            <div class="eda-section-head">
+                <span class="icon">🎯</span>
+                <p class="title">Feature Importance</p>
+            </div>
+            """, unsafe_allow_html=True)
             st.caption("Which columns drove anomaly detection?")
             
             feat_imp = results['stats']['feature_importance']
@@ -193,16 +369,21 @@ anomalies.to_csv('detected_anomalies.csv', index=False)""", language='python')
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#e2e8f0')
             )
-            st.plotly_chart(fig_imp, use_container_width=True)
+            st.plotly_chart(fig_imp)
     
     else:
         st.info("ℹ️ AI analysis requires 2+ numeric columns and 10+ rows")
     
     # =================================================================
-    # STATISTICAL ANALYSIS
+    # STATISTICAL ANALYSIS WITH SECTION HEADER
     # =================================================================
     st.markdown("---")
-    st.markdown('<h2 class="gradient-header">📊 Statistical Analysis</h2>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="eda-section-head">
+        <span class="icon">📊</span>
+        <p class="title">Statistical Analysis</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     c_skew, c_out = st.columns(2)
     

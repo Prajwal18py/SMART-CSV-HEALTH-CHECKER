@@ -8,6 +8,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy import stats
+from utils.export_utils import smart_download_button, get_format_label
 
 def render_skewness_tab(df, sidebar_settings=None):
     """
@@ -18,6 +19,7 @@ def render_skewness_tab(df, sidebar_settings=None):
         sidebar_settings: Optional settings from sidebar (not currently used but kept for consistency)
     """
     st.subheader("📐 Skewness Analysis & Correction")
+    fmt_label = get_format_label()
     
     # ========================================================
     # ✨ DATA SOURCE SELECTOR - Use Cleaned Data if Available
@@ -358,14 +360,13 @@ def render_skewness_tab(df, sidebar_settings=None):
                         # Quick download button (only if transformations exist)
                         if 'skew_fixed_df' in st.session_state and len(st.session_state.get('transformations_log', [])) > 0:
                             transformed_df = st.session_state['skew_fixed_df']
-                            csv_data = transformed_df.to_csv(index=False)
-                            st.download_button(
-                                "⬇️ Quick Download",
-                                data=csv_data,
-                                file_name="data_transformed.csv",
-                                mime="text/csv",
-                                width="stretch",
-                                help="Download transformed dataset"
+                            smart_download_button(
+                                transformed_df,
+                                label=f"⬇️ Quick Download {fmt_label}",
+                                suffix="transformed",
+                                key="dl_skew_quick",
+                                button_width='stretch',
+                                help_text="Download transformed dataset",
                             )
                         elif shift > 0:
                             st.info(f"ℹ️ Shift: +{shift:.2f}")
@@ -470,14 +471,13 @@ def render_skewness_tab(df, sidebar_settings=None):
                             st.success(f"🎉 {len(bulk_columns)} columns transformed successfully!")
                         
                         with quick_dl_col2:
-                            csv_data = working_df.to_csv(index=False)
-                            st.download_button(
-                                "📥 Download Transformed Data",
-                                data=csv_data,
-                                file_name="data_bulk_transformed.csv",
-                                mime="text/csv",
-                                type="primary",
-                                width="stretch"
+                            smart_download_button(
+                                working_df,
+                                label=f"📥 Download {fmt_label}",
+                                suffix="bulk_transformed",
+                                key="dl_skew_bulk",
+                                button_type="primary",
+                                button_width='stretch',
                             )
                         
                         st.rerun()
@@ -505,14 +505,13 @@ def render_skewness_tab(df, sidebar_settings=None):
                 st.info(f"📊 **{len(st.session_state['transformations_log'])}** transformations active on your dataset")
             
             with quick_col2:
-                csv_data = st.session_state['skew_fixed_df'].to_csv(index=False)
-                st.download_button(
-                    "📥 Download Data",
-                    data=csv_data,
-                    file_name="data_transformed.csv",
-                    mime="text/csv",
-                    type="primary",
-                    width="stretch"
+                smart_download_button(
+                    st.session_state['skew_fixed_df'],
+                    label=f"📥 Download {fmt_label}",
+                    suffix="transformed",
+                    key="dl_skew_manage",
+                    button_type="primary",
+                    button_width='stretch',
                 )
             
             st.markdown("---")
@@ -536,14 +535,15 @@ def render_skewness_tab(df, sidebar_settings=None):
             btn_col1, btn_col2, btn_col3 = st.columns(3)
             
             with btn_col1:
-                # Download transformation recipe
+                # Download transformation recipe — always CSV (it's a log, not user data)
                 csv_data = log_df_display.to_csv(index=False)
                 st.download_button(
                     "📥 Download Recipe (CSV)",
                     data=csv_data,
                     file_name="transformation_recipe.csv",
                     mime="text/csv",
-                    width="stretch"
+                    width='stretch',
+                    key="dl_skew_recipe",
                 )
             
             with btn_col2:
@@ -613,16 +613,14 @@ def render_skewness_tab(df, sidebar_settings=None):
         with col_right:
             st.write("")
             st.write("")
-            # Download button
-            csv_data = transformed_df.to_csv(index=False)
-            st.download_button(
-                "📥 Download CSV",
-                data=csv_data,
-                file_name="data_skewness_corrected.csv",
-                mime="text/csv",
-                type="primary",
-                width="stretch",
-                help="Download your dataset with all skewness transformations applied"
+            smart_download_button(
+                transformed_df,
+                label=f"📥 Download {fmt_label}",
+                suffix="skewness_corrected",
+                key="dl_skew_export",
+                button_type="primary",
+                button_width='stretch',
+                help_text="Download dataset with all skewness transformations applied",
             )
         
         # Optional: Show preview of transformed data
@@ -631,6 +629,119 @@ def render_skewness_tab(df, sidebar_settings=None):
     
     else:
         st.info("💡 Apply transformations above to download the corrected dataset")
+
+    # ========================================================
+    # NEXT STEP BANNER
+    # ========================================================
+    if 'skew_fixed_df' in st.session_state and len(st.session_state.get('transformations_log', [])) > 0:
+        st.markdown("---")
+        
+        # Figure out which columns still need attention
+        transformed_cols = [t['column'] for t in st.session_state['transformations_log']]
+        remaining_skewed = [col for col in skew_to_fix.index.tolist() if col not in transformed_cols]
+        normal_numeric = [col for col in numeric_cols if col not in skew_to_fix.index.tolist()]
+        
+        # Scaling recommendations
+        scale_candidates = []
+        for col in working_df.select_dtypes(include=[np.number]).columns:
+            col_range = working_df[col].max() - working_df[col].min()
+            col_mean = abs(working_df[col].mean())
+            if col_range > 100 or col_mean > 100:
+                scale_candidates.append((col, "StandardScaler (large range)"))
+            elif working_df[col].min() >= 0 and working_df[col].max() <= 1:
+                pass  # Already scaled
+            else:
+                scale_candidates.append((col, "MinMaxScaler"))
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05));
+                    border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 14px; padding: 1.5rem;
+                    margin-top: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem;">
+                <span style="font-size: 1.8rem;">🔧</span>
+                <div>
+                    <p style="color: #a5b4fc; font-weight: 700; margin: 0; font-size: 1.1rem;">
+                        Next Step: Feature Engineering
+                    </p>
+                    <p style="color: rgba(203,213,224,0.6); margin: 0; font-size: 0.85rem;">
+                        Your skewness corrections are saved — now scale and encode your features for ML
+                    </p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Recommendations based on actual data
+        rec_col1, rec_col2 = st.columns(2)
+        
+        with rec_col1:
+            st.markdown("##### 📏 Scaling Recommendations")
+            if scale_candidates:
+                for col, method in scale_candidates[:5]:
+                    st.markdown(f"""
+                    <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
+                                border-radius: 8px; padding: 0.5rem 0.8rem; margin-bottom: 0.4rem;
+                                display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #a5b4fc; font-family: monospace; font-size: 0.85rem;">📊 {col}</span>
+                        <span style="color: #6ee7b7; font-size: 0.75rem; background: rgba(16,185,129,0.1);
+                                    padding: 0.15rem 0.5rem; border-radius: 10px;">{method}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                if len(scale_candidates) > 5:
+                    st.caption(f"...and {len(scale_candidates) - 5} more columns")
+            else:
+                st.success("✅ All columns appear already scaled!")
+        
+        with rec_col2:
+            st.markdown("##### 🏷️ Encoding Recommendations")
+            cat_cols = working_df.select_dtypes(include=['object', 'category']).columns.tolist()
+            if cat_cols:
+                for col in cat_cols[:5]:
+                    n_unique = working_df[col].nunique()
+                    method = "One-Hot Encoding" if n_unique <= 10 else "Label Encoding"
+                    color = "#fbbf24" if n_unique <= 10 else "#f87171"
+                    st.markdown(f"""
+                    <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
+                                border-radius: 8px; padding: 0.5rem 0.8rem; margin-bottom: 0.4rem;
+                                display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #a5b4fc; font-family: monospace; font-size: 0.85rem;">🏷️ {col}</span>
+                        <span style="color: {color}; font-size: 0.75rem; background: rgba(99,102,241,0.1);
+                                    padding: 0.15rem 0.5rem; border-radius: 10px;">{method}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                if len(cat_cols) > 5:
+                    st.caption(f"...and {len(cat_cols) - 5} more columns")
+            else:
+                st.success("✅ No categorical columns to encode!")
+        
+        # Warning if some columns still skewed
+        if remaining_skewed:
+            st.warning(
+                f"⚠️ **{len(remaining_skewed)} column(s) still skewed:** "
+                f"{', '.join(remaining_skewed[:3])}{'...' if len(remaining_skewed) > 3 else ''} "
+                "— Consider transforming these before Feature Engineering",
+                icon="📐"
+            )
+        
+        # Final CTA button
+        st.markdown("""
+        <div style="text-align: center; margin-top: 1rem;">
+            <p style="color: rgba(203,213,224,0.5); font-size: 0.85rem;">
+                ✅ Skewness corrections saved automatically • 
+                Your data is ready for the next step!
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    else:
+        # Show next step even if no transformations — if data is already clean
+        if high_skew.empty:
+            st.markdown("---")
+            st.info(
+                "✅ **Your data has no high skewness!** "
+                "Head to the **🔧 Feature Engineering** tab to scale and encode your features.",
+                icon="🔧"
+            )
 
 
 # ========================================================
